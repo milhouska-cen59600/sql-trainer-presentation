@@ -69,7 +69,7 @@ function renderTask(index) {
     element(name).textContent = task[name] || "";
     element(`${name}-section`).hidden = !task[name];
   }
-  element("answer").value = task.type === "find-bug" ? task.sql : "";
+  element("answer").value = "";
   setActions(true);
 }
 

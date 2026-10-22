@@ -1,7 +1,7 @@
 # SQL trenažér z prezentace
 
 Jednoduchý český trenažér Oracle SQL bez frameworku, databáze a externích závislostí.
-Obsahuje 12 základních a 6 pokročilých úloh: operátory, datum, řetězce,
+Obsahuje 8 základních a 4 pokročilé úlohy: operátory, datum, řetězce,
 datové typy, čísla a množinové operace. Každá úloha obsahuje krátkou teorii,
 nápovědu a vzorové řešení; tam, kde jsou potřeba, také ukázková data.
 
@@ -20,7 +20,7 @@ načtení JSON. Na GitHub Pages funguje relativní cesta `./tasks.json` i pod n�
 repozitáře. JavaScript potřebuje moderní prohlížeč.
 
 Vyber úroveň **Základy** (`zaklady`) nebo **Pokročilé** (`pokrocile`), typ
-**Napiš dotaz**, **Oprav chybu**, **Vysvětli výsledek** a volitelně téma.
+**Napiš dotaz**, **Vysvětli výsledek** a volitelně téma.
 Klikni na **Spustit**. **Další úloha** cyklicky prochází aktuální výběr.
 Změna filtru vymaže rozepsanou odpověď a vyžaduje nové spuštění.
 Prázdná kombinace filtrů zobrazí zprávu, nikoli nesouvisející úlohu.
@@ -77,10 +77,10 @@ Katalog je neprázdné JSON pole objektů. Povinné klíče:
 | `id` | Unikátní kladné celé číslo |
 | `level` | `zaklady` nebo `pokrocile` |
 | `topic` | `operatory`, `datum`, `retezce`, `datove-typy`, `cisla`, `mnozinove-operace` |
-| `type` | `write-query`, `find-bug`, `explain-result` |
+| `type` | `write-query`, `explain-result` |
 | `instruction` | Krátký titulek zadání |
 | `prompt` | Přesné zadání bez univerzálních poznámek o nesouvisejících sloupcích |
-| `sql` | SQL k rozboru/opravě; u psaní dotazu může být `null` |
+| `sql` | SQL k rozboru; u psaní dotazu může být `null` |
 | `theory` | Krátká teorie; prázdný řetězec skryje blok |
 | `tables` | Pole `{name, columns, rows}`; může být prázdné |
 | `solution` | Vzorový dotaz nebo vysvětlení |
@@ -90,7 +90,7 @@ Katalog je neprázdné JSON pole objektů. Povinné klíče:
 `columns` obsahuje popisky sloupců včetně typů, `rows` pole stejně širokých řádků.
 Buňky jsou text, číslo nebo `null` (zobrazí se jako `NULL`). Data jsou pouze
 ukázka, ne databáze. Poznámky o chybějících hodnotách přidávej jen tam, kde mají
-význam. `explain-result` a `find-bug` vyžadují neprázdné `sql`.
+význam. `explain-result` vyžaduje neprázdné `sql`.
 Pro vysvětlení vybírej stručná jednoznačná klíčová slova; kontrola hledá celé
 tokeny, ne podřetězce (`2` neodpovídá `12`). Používej desetinný oddělovač shodný
 se vzorovým řešením. Pokud jsou klíčová slova výhradně seznamem více celých čísel,
@@ -116,7 +116,7 @@ Není nutný bundler ani build workflow.
 
 Původní `sql-trainer-cli` nabízí CLI/GUI a webový trenažér s bankovní doménou
 a úrovněmi Junior/Medior/Senior. Tento samostatný projekt přebírá princip
-výběru úlohy, nápovědy a řešení i vizuální styl (světlé karty, tmavý panel
-zadání, jednotné tmavé selecty a textarea), ale zaměřuje se na témata
+výběru úlohy, nápovědy a řešení i vizuální styl (světlé karty, tmavé panely
+zadání a odpovědi, tmavé selecty a textarea), ale zaměřuje se na témata
 prezentace, právě dvě úrovně a teorii u každé úlohy. Nesdílí databázi,
 Python runtime aplikaci ani katalog původního projektu.

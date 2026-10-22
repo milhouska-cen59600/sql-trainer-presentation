@@ -26,7 +26,6 @@
         <label>Typ úlohy
           <select id="task-type">
             <option value="write-query">Napiš dotaz</option>
-            <option value="find-bug">Oprav chybu</option>
             <option value="explain-result">Vysvětli výsledek</option>
           </select>
         </label>
@@ -44,7 +43,7 @@
       <p id="prompt" role="status">Načítám katalog úloh…</p>
       <div id="tables"></div>
       <section id="sql-section" hidden>
-        <h3>SQL k rozboru nebo opravě</h3>
+        <h3>SQL k rozboru</h3>
         <pre id="sql"></pre>
       </section>
       <section id="theory-section" hidden>
@@ -52,7 +51,7 @@
         <p id="theory"></p>
       </section>
     </section>
-    <form id="answer-form" class="card">
+    <form id="answer-form" class="card task-panel answer-panel">
       <label for="answer">Tvoje odpověď</label>
       <textarea id="answer" rows="7" spellcheck="false" disabled aria-describedby="rules"></textarea>
       <p id="rules">SQL se neprovádí. Kontrola porovnává zápis se vzorem (ignoruje mezery a velikost SQL klíčových slov); vysvětlení hledá klíčová slova. Jiná správná řešení nemusí rozpoznat.</p>

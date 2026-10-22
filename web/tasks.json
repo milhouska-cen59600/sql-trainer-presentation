@@ -44,50 +44,6 @@
     "keywords": []
   },
   {
-    "id": 2,
-    "level": "zaklady",
-    "topic": "operatory",
-    "type": "find-bug",
-    "instruction": "Oprav podmínku pro interval cen.",
-    "prompt": "Vrať nazev produktů s cenou od 80 do 120 včetně.",
-    "sql": "SELECT nazev FROM produkty WHERE cena BETWEEN 80 OR 120;",
-    "solution": "SELECT nazev FROM produkty WHERE cena BETWEEN 80 AND 120;",
-    "hint": "BETWEEN používá pro oddělení mezí slovo AND, nikoli OR.",
-    "theory": "BETWEEN dolni AND horni zahrnuje obě hranice.",
-    "tables": [
-      {
-        "name": "produkty",
-        "columns": [
-          "id NUMBER",
-          "nazev VARCHAR2(30)",
-          "cena NUMBER",
-          "skladem NUMBER"
-        ],
-        "rows": [
-          [
-            1,
-            "Čaj",
-            80,
-            1
-          ],
-          [
-            2,
-            "Káva",
-            150,
-            0
-          ],
-          [
-            3,
-            "Kakao",
-            120,
-            1
-          ]
-        ]
-      }
-    ],
-    "keywords": []
-  },
-  {
     "id": 3,
     "level": "zaklady",
     "topic": "datum",
@@ -172,42 +128,6 @@
     "keywords": []
   },
   {
-    "id": 6,
-    "level": "zaklady",
-    "topic": "retezce",
-    "type": "find-bug",
-    "instruction": "Oprav porovnání s textem.",
-    "prompt": "Vrať id osoby se jménem Eva. Oprav druh uvozovek.",
-    "sql": "SELECT id FROM lide WHERE jmeno = \"Eva\";",
-    "solution": "SELECT id FROM lide WHERE jmeno = 'Eva';",
-    "hint": "Textový literál používá jednoduché uvozovky.",
-    "theory": "Jednoduché uvozovky označují řetězec; dvojité označují identifikátor.",
-    "tables": [
-      {
-        "name": "lide",
-        "columns": [
-          "id NUMBER",
-          "jmeno VARCHAR2(30)"
-        ],
-        "rows": [
-          [
-            1,
-            "Eva"
-          ],
-          [
-            2,
-            "Petr"
-          ],
-          [
-            3,
-            "Ema"
-          ]
-        ]
-      }
-    ],
-    "keywords": []
-  },
-  {
     "id": 7,
     "level": "zaklady",
     "topic": "datove-typy",
@@ -222,20 +142,6 @@
     "keywords": [
       "42"
     ]
-  },
-  {
-    "id": 8,
-    "level": "zaklady",
-    "topic": "datove-typy",
-    "type": "find-bug",
-    "instruction": "Oprav syntaxi explicitního převodu.",
-    "prompt": "Převeď text '15' na NUMBER pomocí CAST.",
-    "sql": "SELECT CAST('15', NUMBER) FROM dual;",
-    "solution": "SELECT CAST('15' AS NUMBER) FROM dual;",
-    "hint": "Mezi hodnotou a typem patří AS.",
-    "theory": "CAST používá AS, nikoli čárku. Explicitní převody jsou čitelnější než implicitní.",
-    "tables": [],
-    "keywords": []
   },
   {
     "id": 9,
@@ -318,96 +224,6 @@
     ]
   },
   {
-    "id": 12,
-    "level": "zaklady",
-    "topic": "mnozinove-operace",
-    "type": "find-bug",
-    "instruction": "Oprav počet sloupců sjednocení.",
-    "prompt": "Sjednoť pouze sloupec id z obou tabulek bez duplicit.",
-    "sql": "SELECT id FROM a UNION SELECT id, id FROM b;",
-    "solution": "SELECT id FROM a UNION SELECT id FROM b;",
-    "hint": "Obě větve musí mít stejný počet sloupců.",
-    "theory": "Množinové operace vyžadují shodný počet sloupců a kompatibilní typy.",
-    "tables": [
-      {
-        "name": "a",
-        "columns": [
-          "id NUMBER"
-        ],
-        "rows": [
-          [
-            1
-          ],
-          [
-            2
-          ],
-          [
-            2
-          ]
-        ]
-      },
-      {
-        "name": "b",
-        "columns": [
-          "id NUMBER"
-        ],
-        "rows": [
-          [
-            2
-          ],
-          [
-            3
-          ]
-        ]
-      }
-    ],
-    "keywords": []
-  },
-  {
-    "id": 13,
-    "level": "pokrocile",
-    "topic": "operatory",
-    "type": "find-bug",
-    "instruction": "Oprav prioritu logických operátorů.",
-    "prompt": "Vrať nazev produktů s cenou pod 100 nebo nad 140, ale vždy pouze skladem = 1.",
-    "sql": "SELECT nazev FROM produkty WHERE cena < 100 OR cena > 140 AND skladem = 1;",
-    "solution": "SELECT nazev FROM produkty WHERE (cena < 100 OR cena > 140) AND skladem = 1;",
-    "hint": "Uzavři alternativy cen do závorek.",
-    "theory": "AND má vyšší prioritu než OR. Závorky umožňují určit pořadí vyhodnocení.",
-    "tables": [
-      {
-        "name": "produkty",
-        "columns": [
-          "id NUMBER",
-          "nazev VARCHAR2(30)",
-          "cena NUMBER",
-          "skladem NUMBER"
-        ],
-        "rows": [
-          [
-            1,
-            "Čaj",
-            80,
-            1
-          ],
-          [
-            2,
-            "Káva",
-            150,
-            0
-          ],
-          [
-            3,
-            "Kakao",
-            120,
-            1
-          ]
-        ]
-      }
-    ],
-    "keywords": []
-  },
-  {
     "id": 14,
     "level": "pokrocile",
     "topic": "datum",
@@ -466,20 +282,6 @@
     "solution": "SELECT TO_DATE('31.12.2026', 'DD.MM.YYYY') FROM dual;",
     "hint": "Druhým argumentem je formátovací maska.",
     "theory": "TO_DATE s explicitní maskou nevyžaduje implicitní interpretaci vstupu podle NLS_DATE_FORMAT.",
-    "tables": [],
-    "keywords": []
-  },
-  {
-    "id": 17,
-    "level": "pokrocile",
-    "topic": "cisla",
-    "type": "find-bug",
-    "instruction": "Oprav zaokrouhlení na stovky.",
-    "prompt": "Použij ROUND tak, aby se 1499 zaokrouhlilo na celé stovky.",
-    "sql": "SELECT ROUND(1499, 2) FROM dual;",
-    "solution": "SELECT ROUND(1499, -2) FROM dual;",
-    "hint": "Pro místa vlevo od desetinné čárky použij záporný argument.",
-    "theory": "ROUND(n, -2) zaokrouhluje na stovky; ROUND(n, 2) na setiny.",
     "tables": [],
     "keywords": []
   },
