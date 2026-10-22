@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 LEVELS = {"zaklady", "pokrocile"}
-TYPES = {"write-query", "find-bug", "explain-result"}
+TYPES = {"write-query", "explain-result"}
 TOPICS = {"operatory", "datum", "retezce", "datove-typy", "cisla", "mnozinove-operace"}
 REQUIRED_KEYS = {
     "id", "level", "topic", "type", "instruction", "prompt", "sql",
@@ -51,12 +51,6 @@ SEED = [
          "Obě podmínky spoj pomocí AND.",
          "AND vyžaduje splnění obou podmínek. Operátor <= zahrnuje i mezní hodnotu.",
          [PRODUCTS]),
-    task(2, "zaklady", "operatory", "find-bug",
-         "Oprav podmínku pro interval cen.", "Vrať nazev produktů s cenou od 80 do 120 včetně.",
-         "SELECT nazev FROM produkty WHERE cena BETWEEN 80 AND 120;",
-         "BETWEEN používá pro oddělení mezí slovo AND, nikoli OR.",
-         "BETWEEN dolni AND horni zahrnuje obě hranice.", [PRODUCTS],
-         "SELECT nazev FROM produkty WHERE cena BETWEEN 80 OR 120;"),
     task(3, "zaklady", "datum", "write-query",
          "Vyber únorové a pozdější akce.", "Vrať id akcí od 1. února 2026 včetně. Použij literál DATE.",
          "SELECT id FROM akce WHERE konani >= DATE '2026-02-01';",
@@ -71,21 +65,11 @@ SEED = [
          "Převeď jména na velká písmena.", "Vrať UPPER(jmeno) pro všechny osoby.",
          "SELECT UPPER(jmeno) FROM lide;", "Použij funkci UPPER.",
          "UPPER převádí písmena na velká, LOWER na malá. Nemění uložená data.", [PEOPLE]),
-    task(6, "zaklady", "retezce", "find-bug",
-         "Oprav porovnání s textem.", "Vrať id osoby se jménem Eva. Oprav druh uvozovek.",
-         "SELECT id FROM lide WHERE jmeno = 'Eva';", "Textový literál používá jednoduché uvozovky.",
-         "Jednoduché uvozovky označují řetězec; dvojité označují identifikátor.", [PEOPLE],
-         'SELECT id FROM lide WHERE jmeno = "Eva";'),
     task(7, "zaklady", "datove-typy", "explain-result",
          "Vysvětli převod typu.", "Jakou číselnou hodnotu vrátí dotaz?",
          "Vrátí číslo 42, nikoli text.", "CAST převádí text '42' na NUMBER.",
          "CAST(vyraz AS typ) provádí explicitní převod datového typu.",
          sql="SELECT CAST('42' AS NUMBER) FROM dual;", keywords=["42"]),
-    task(8, "zaklady", "datove-typy", "find-bug",
-         "Oprav syntaxi explicitního převodu.", "Převeď text '15' na NUMBER pomocí CAST.",
-         "SELECT CAST('15' AS NUMBER) FROM dual;", "Mezi hodnotou a typem patří AS.",
-         "CAST používá AS, nikoli čárku. Explicitní převody jsou čitelnější než implicitní.",
-         sql="SELECT CAST('15', NUMBER) FROM dual;"),
     task(9, "zaklady", "cisla", "write-query",
          "Zaokrouhli cenu.", "Vrať číslo 123.456 zaokrouhlené na dvě desetinná místa pomocí ROUND.",
          "SELECT ROUND(123.456, 2) FROM dual;", "Druhý argument určuje počet desetinných míst.",
@@ -101,18 +85,6 @@ SEED = [
          "Hodnota 2 se objeví jen jednou.",
          "UNION sjednotí výsledky a odstraní duplicity; pořadí určuje až ORDER BY.", SETS,
          "SELECT id FROM a UNION SELECT id FROM b;", ["1", "2", "3"]),
-    task(12, "zaklady", "mnozinove-operace", "find-bug",
-         "Oprav počet sloupců sjednocení.", "Sjednoť pouze sloupec id z obou tabulek bez duplicit.",
-         "SELECT id FROM a UNION SELECT id FROM b;", "Obě větve musí mít stejný počet sloupců.",
-         "Množinové operace vyžadují shodný počet sloupců a kompatibilní typy.", SETS,
-         "SELECT id FROM a UNION SELECT id, id FROM b;"),
-    task(13, "pokrocile", "operatory", "find-bug",
-         "Oprav prioritu logických operátorů.",
-         "Vrať nazev produktů s cenou pod 100 nebo nad 140, ale vždy pouze skladem = 1.",
-         "SELECT nazev FROM produkty WHERE (cena < 100 OR cena > 140) AND skladem = 1;",
-         "Uzavři alternativy cen do závorek.",
-         "AND má vyšší prioritu než OR. Závorky umožňují určit pořadí vyhodnocení.", [PRODUCTS],
-         "SELECT nazev FROM produkty WHERE cena < 100 OR cena > 140 AND skladem = 1;"),
     task(14, "pokrocile", "datum", "write-query",
          "Vyber všechny akce během února.",
          "Vrať id akcí v únoru 2026 včetně libovolného času posledního dne. Použij >= a < s literály DATE.",
@@ -131,11 +103,6 @@ SEED = [
          "SELECT TO_DATE('31.12.2026', 'DD.MM.YYYY') FROM dual;",
          "Druhým argumentem je formátovací maska.",
          "TO_DATE s explicitní maskou nevyžaduje implicitní interpretaci vstupu podle NLS_DATE_FORMAT."),
-    task(17, "pokrocile", "cisla", "find-bug",
-         "Oprav zaokrouhlení na stovky.", "Použij ROUND tak, aby se 1499 zaokrouhlilo na celé stovky.",
-         "SELECT ROUND(1499, -2) FROM dual;", "Pro místa vlevo od desetinné čárky použij záporný argument.",
-         "ROUND(n, -2) zaokrouhluje na stovky; ROUND(n, 2) na setiny.",
-         sql="SELECT ROUND(1499, 2) FROM dual;"),
     task(18, "pokrocile", "mnozinove-operace", "explain-result",
          "Vysvětli rozdíl množin.", "Která hodnota id zbude po operaci MINUS?",
          "Zbude pouze 1. Hodnota 2 je také v b, proto je odstraněna.",
@@ -166,7 +133,7 @@ def validate_catalog(catalog):
             raise ValueError(f"Task {id_}: theory must be text (may be empty)")
         if item["sql"] is not None and not isinstance(item["sql"], str):
             raise ValueError(f"Task {id_}: sql must be text or null")
-        if item["type"] in {"find-bug", "explain-result"} and not (item["sql"] or "").strip():
+        if item["type"] == "explain-result" and not (item["sql"] or "").strip():
             raise ValueError(f"Task {id_}: this type requires SQL")
         keywords = item["keywords"]
         if not isinstance(keywords, list) or any(

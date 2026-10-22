@@ -29,12 +29,16 @@ select, textarea {
 }
 select option { background: #13283d; color: #e4f0fa; }
 textarea { resize: vertical; min-height: 9rem; font-family: ui-monospace, monospace; }
-button { background: #155c83; color: #fff; border: 1px solid transparent; cursor: pointer; font-weight: 700; }
-button.secondary { background: #efeffb; color: #344a81; border-color: #dbd8f6; }
+button { background: #e4f0fa; color: #172c43; border: 1px solid #b8c9d8; cursor: pointer; font-weight: 700; }
+button.secondary { background: #d5e4ef; color: #172c43; border-color: #aebfd0; }
 button:hover:not(:disabled) { filter: brightness(.9); }
 button:disabled, textarea:disabled { opacity: .6; cursor: not-allowed; }
 :focus-visible { outline: 3px solid #e4a239; outline-offset: 3px; }
 .task-panel { background: #13283d; color: #e4f0fa; border-top: 4px solid #45aaa0; }
+.answer-panel textarea { background: #0c1c2c; border-color: #58728a; }
+.answer-panel textarea:focus-visible { border-color: #e4a239; }
+.answer-panel #rules { color: #b8c9d8; }
+.answer-panel #feedback { color: #e4f0fa; }
 #position { color: #83d8ce; }
 #prompt, #instruction, #theory { white-space: pre-wrap; overflow-wrap: anywhere; }
 pre { padding: 1rem; background: #0c1c2c; color: #e4f0fa; border-radius: .6rem; white-space: pre-wrap; overflow-wrap: anywhere; }

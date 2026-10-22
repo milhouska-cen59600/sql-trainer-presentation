@@ -33,11 +33,11 @@ class CatalogTests(unittest.TestCase):
             self.assertIn(task["type"], builder.TYPES)
 
     def test_starter_coverage(self):
-        for level, minimum in (("zaklady", 12), ("pokrocile", 6)):
+        for level, minimum in (("zaklady", 8), ("pokrocile", 4)):
             tasks = [task for task in self.catalog if task["level"] == level]
             self.assertGreaterEqual(len(tasks), minimum)
-            self.assertEqual({task["topic"] for task in tasks}, builder.TOPICS)
             self.assertEqual({task["type"] for task in tasks}, builder.TYPES)
+        self.assertEqual({task["topic"] for task in self.catalog}, builder.TOPICS)
         self.assertTrue(all(task["theory"].strip() for task in self.catalog))
 
     def test_seed_is_valid(self):
@@ -61,12 +61,22 @@ class CatalogTests(unittest.TestCase):
                 with self.assertRaises(ValueError):
                     builder.validate_catalog(catalog)
 
-    def test_explanation_and_bug_require_sql(self):
-        for type_ in ("explain-result", "find-bug"):
-            item = copy.deepcopy(next(task for task in self.catalog if task["type"] == type_))
-            item["sql"] = None
-            with self.assertRaises(ValueError):
-                builder.validate_catalog([item])
+    def test_find_bug_removed_from_ui_seed_and_catalog(self):
+        self.assertEqual(builder.TYPES, {"write-query", "explain-result"})
+        self.assertTrue(all(task["type"] != "find-bug" for task in builder.SEED))
+        self.assertTrue(all(task["type"] != "find-bug" for task in self.catalog))
+        self.assertNotIn('value="find-bug"', (ROOT / "web/index.html").read_text(encoding="utf-8"))
+        self.assertNotIn("find-bug", (ROOT / "web/app.js").read_text(encoding="utf-8"))
+        legacy = copy.deepcopy(self.catalog)
+        legacy[0]["type"] = "find-bug"
+        with self.assertRaises(ValueError):
+            builder.validate_catalog(legacy)
+
+    def test_explanation_requires_sql(self):
+        item = copy.deepcopy(next(task for task in self.catalog if task["type"] == "explain-result"))
+        item["sql"] = None
+        with self.assertRaises(ValueError):
+            builder.validate_catalog([item])
 
     def test_generator_source_and_determinism(self):
         originals = {name: (ROOT / name / "tasks.json").read_bytes() for name in ("web", "docs")}
