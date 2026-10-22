@@ -4,6 +4,7 @@
 import argparse
 import json
 from pathlib import Path
+import re
 
 ROOT = Path(__file__).resolve().parents[1]
 LEVELS = {"zaklady", "pokrocile"}
@@ -112,7 +113,46 @@ SEED = [
 ]
 
 
-def validate_catalog(catalog):
+def validate_outline(outline):
+    if not isinstance(outline, dict) or outline.get("version") != 1:
+        raise ValueError("Outline must have version 1")
+    target = outline.get("target_total")
+    if type(target) is not int or not 80 <= target <= 120:
+        raise ValueError("Outline target_total must be an integer between 80 and 120")
+    topics = outline.get("topics")
+    if not isinstance(topics, list) or not topics:
+        raise ValueError("Outline topics must be a non-empty list")
+    pairs, labels, levels = set(), {}, set()
+    total = 0
+    for topic in topics:
+        if not isinstance(topic, dict):
+            raise ValueError("Outline topic must be an object")
+        slug, level, label = topic.get("slug"), topic.get("level"), topic.get("label")
+        if not isinstance(slug, str) or not re.fullmatch(r"[a-z]+(?:-[a-z]+)*", slug):
+            raise ValueError("Outline topic must have a canonical slug")
+        if not isinstance(level, str) or level not in LEVELS:
+            raise ValueError("Outline topic has an invalid level")
+        if (level, slug) in pairs:
+            raise ValueError("Duplicate outline level/topic")
+        pairs.add((level, slug))
+        levels.add(level)
+        if not isinstance(label, str) or not label.strip() or labels.get(slug, label) != label:
+            raise ValueError("Outline topic must have a consistent non-empty label")
+        labels[slug] = label
+        quotas = topic.get("quotas")
+        if not isinstance(quotas, dict) or quotas.keys() != TYPES:
+            raise ValueError("Outline quotas must use exactly the allowed task types")
+        if any(type(value) is not int or value < 0 for value in quotas.values()):
+            raise ValueError("Outline quotas must be non-negative integers")
+        if not sum(quotas.values()):
+            raise ValueError("Outline topic quota must be positive")
+        total += sum(quotas.values())
+    if levels != LEVELS or total != target:
+        raise ValueError("Outline levels or quota total do not match the target")
+    return outline
+
+
+def validate_catalog(catalog, topics=TOPICS):
     if not isinstance(catalog, list) or not catalog:
         raise ValueError("Catalog must be a non-empty list")
     ids = set()
@@ -123,7 +163,7 @@ def validate_catalog(catalog):
         if type(id_) is not int or id_ <= 0 or id_ in ids:
             raise ValueError(f"Invalid or duplicate task ID: {id_}")
         ids.add(id_)
-        for key, allowed in [("level", LEVELS), ("type", TYPES), ("topic", TOPICS)]:
+        for key, allowed in [("level", LEVELS), ("type", TYPES), ("topic", topics)]:
             if not isinstance(item[key], str) or item[key] not in allowed:
                 raise ValueError(f"Task {id_}: invalid {key}")
         for key in ["instruction", "prompt", "solution", "hint"]:
@@ -166,9 +206,13 @@ def validate_catalog(catalog):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--source", type=Path, help="Curated JSON source, same schema as tasks.json")
+    parser.add_argument("--outline", type=Path, help="JSON curriculum with topic quotas (not task content)")
     args = parser.parse_args()
     source = args.source if args.source is not None else ROOT / "materials/tasks_source.json"
     try:
+        outline = None
+        if args.outline is not None:
+            outline = validate_outline(json.loads(args.outline.read_text(encoding="utf-8")))
         if source.exists():
             catalog = json.loads(source.read_text(encoding="utf-8"))
         elif args.source is not None:
@@ -177,13 +221,27 @@ def main():
             catalog = SEED
             print("No materials/tasks_source.json found; using embedded starter seed.")
             print("Copy web/tasks.json to materials/tasks_source.json, edit it, then rerun this script.")
-        validate_catalog(catalog)
+        topics = {topic["slug"] for topic in outline["topics"]} if outline else TOPICS
+        validate_catalog(catalog, topics)
+        if outline:
+            pairs = {(topic["level"], topic["slug"]) for topic in outline["topics"]}
+            if any((item["level"], item["topic"]) not in pairs for item in catalog):
+                raise ValueError("Catalog level/topic is not in the outline")
         output = json.dumps(catalog, ensure_ascii=False, indent=2, allow_nan=False) + "\n"
     except (OSError, ValueError) as error:
         parser.exit(1, f"Catalog error: {error}\n")
     for directory in ("web", "docs"):
         (ROOT / directory / "tasks.json").write_text(output, encoding="utf-8")
     print(f"Generated {len(catalog)} tasks in web/tasks.json and docs/tasks.json.")
+    if outline:
+        print(f"Outline coverage: {len(catalog)}/{outline['target_total']} tasks (current/target).")
+        for topic in outline["topics"]:
+            for type_, quota in topic["quotas"].items():
+                count = sum(
+                    item["level"] == topic["level"] and item["topic"] == topic["slug"]
+                    and item["type"] == type_ for item in catalog
+                )
+                print(f"{topic['level']}/{topic['slug']}/{type_}: {count}/{quota}")
 
 
 if __name__ == "__main__":
