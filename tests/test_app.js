@@ -34,10 +34,14 @@ test("explanations match whole numbers, words and dates", () => {
   assert.equal(check("12", explanation(["2"])), false);
   assert.equal(check("-2", explanation(["2"])), false);
   assert.equal(check("2.5", explanation(["2"])), false);
+  assert.equal(check("2,5", explanation(["2"])), false);
   assert.equal(check("2", explanation(["2"])), true);
   assert.equal(check("Vrátí SQL.", explanation(["SQL"])), true);
   assert.equal(check("MySQL", explanation(["SQL"])), false);
   assert.equal(check("2026-01-16", explanation(["2026-01-16"])), true);
   assert.equal(check("2026-01-17", explanation(["2026-01-16"])), false);
   assert.equal(check("1 a 2", explanation(["1", "2", "3"])), false);
+  assert.equal(check("1,2,3", explanation(["1", "2", "3"])), true);
+  assert.equal(check("1.5,2,3", explanation(["1", "2", "3"])), false);
+  assert.equal(check("cokoli", explanation(["!!!"])), false);
 });

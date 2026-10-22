@@ -93,7 +93,8 @@ ukázka, ne databáze. Poznámky o chybějících hodnotách přidávej jen tam,
 význam. `explain-result` a `find-bug` vyžadují neprázdné `sql`.
 Pro vysvětlení vybírej stručná jednoznačná klíčová slova; kontrola hledá celé
 tokeny, ne podřetězce (`2` neodpovídá `12`). Používej desetinný oddělovač shodný
-se vzorovým řešením.
+se vzorovým řešením. Pokud jsou klíčová slova výhradně seznamem více celých čísel,
+čárka v odpovědi odděluje položky seznamu (`1,2,3`), nikoli desetinná místa.
 
 ## Synchronizace a publikace
 

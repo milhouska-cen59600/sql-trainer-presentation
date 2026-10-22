@@ -97,8 +97,12 @@ function words(text) {
 
 function checkAnswer(answer, task) {
   if (task.type !== "explain-result") return normalizeSql(answer) === normalizeSql(task.solution);
-  const tokens = new Set(words(answer));
-  return task.keywords.every((keyword) => words(keyword).every((word) => tokens.has(word)));
+  const integerList = task.keywords.length > 1 && task.keywords.every((keyword) => /^[+-]?\d+$/.test(keyword));
+  const tokens = new Set(words(integerList ? answer.replaceAll(",", " ") : answer));
+  return task.keywords.every((keyword) => {
+    const expected = words(keyword);
+    return expected.length > 0 && expected.every((word) => tokens.has(word));
+  });
 }
 
 element("load").addEventListener("click", startSelection);
