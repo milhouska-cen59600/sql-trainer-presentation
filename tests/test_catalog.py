@@ -1,0 +1,98 @@
+import copy
+import importlib.util
+import json
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import unittest
+
+ROOT = Path(__file__).resolve().parents[1]
+spec = importlib.util.spec_from_file_location("build_tasks", ROOT / "scripts/build_tasks.py")
+builder = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(builder)
+
+
+class CatalogTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.catalog = json.loads((ROOT / "web/tasks.json").read_text(encoding="utf-8"))
+
+    def test_mirrored_assets(self):
+        for name in ("index.html", "app.js", "styles.css", "tasks.json"):
+            with self.subTest(asset=name):
+                self.assertEqual((ROOT / "web" / name).read_bytes(), (ROOT / "docs" / name).read_bytes())
+
+    def test_schema(self):
+        self.assertIs(builder.validate_catalog(self.catalog), self.catalog)
+        ids = [task["id"] for task in self.catalog]
+        self.assertEqual(len(ids), len(set(ids)))
+        for task in self.catalog:
+            self.assertTrue(builder.REQUIRED_KEYS <= task.keys())
+            self.assertIn(task["level"], builder.LEVELS)
+            self.assertIn(task["type"], builder.TYPES)
+
+    def test_starter_coverage(self):
+        for level, minimum in (("zaklady", 12), ("pokrocile", 6)):
+            tasks = [task for task in self.catalog if task["level"] == level]
+            self.assertGreaterEqual(len(tasks), minimum)
+            self.assertEqual({task["topic"] for task in tasks}, builder.TOPICS)
+            self.assertEqual({task["type"] for task in tasks}, builder.TYPES)
+        self.assertTrue(all(task["theory"].strip() for task in self.catalog))
+
+    def test_seed_is_valid(self):
+        builder.validate_catalog(builder.SEED)
+
+    def test_invalid_catalogs_rejected(self):
+        cases = [[], {}, self.catalog + [self.catalog[0]]]
+        for key, value in [
+            ("id", True), ("level", "beginner"), ("type", "quiz"), ("topic", []),
+            ("instruction", ""), ("theory", None), ("keywords", [None]),
+            ("tables", [{"name": "x", "columns": ["id"], "rows": [[1, 2]]}]),
+        ]:
+            catalog = copy.deepcopy(self.catalog)
+            catalog[0][key] = value
+            cases.append(catalog)
+        missing = copy.deepcopy(self.catalog)
+        del missing[0]["prompt"]
+        cases.append(missing)
+        for catalog in cases:
+            with self.subTest(catalog=catalog[:1] if isinstance(catalog, list) else catalog):
+                with self.assertRaises(ValueError):
+                    builder.validate_catalog(catalog)
+
+    def test_explanation_and_bug_require_sql(self):
+        for type_ in ("explain-result", "find-bug"):
+            item = copy.deepcopy(next(task for task in self.catalog if task["type"] == type_))
+            item["sql"] = None
+            with self.assertRaises(ValueError):
+                builder.validate_catalog([item])
+
+    def test_generator_source_and_determinism(self):
+        originals = {name: (ROOT / name / "tasks.json").read_bytes() for name in ("web", "docs")}
+        try:
+            with tempfile.TemporaryDirectory() as directory:
+                source = Path(directory) / "tasks.json"
+                source.write_text(json.dumps(self.catalog, ensure_ascii=False), encoding="utf-8")
+                command = [sys.executable, str(ROOT / "scripts/build_tasks.py"), "--source", str(source)]
+                subprocess.run(command, check=True, capture_output=True)
+                first = (ROOT / "web/tasks.json").read_bytes()
+                subprocess.run(command, check=True, capture_output=True)
+                self.assertEqual(first, (ROOT / "web/tasks.json").read_bytes())
+                self.assertEqual(first, (ROOT / "docs/tasks.json").read_bytes())
+                self.assertEqual(json.loads(first), self.catalog)
+                source.write_text("[]", encoding="utf-8")
+                result = subprocess.run(command, capture_output=True)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(first, (ROOT / "web/tasks.json").read_bytes())
+                source.unlink()
+                result = subprocess.run(command, capture_output=True)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(first, (ROOT / "docs/tasks.json").read_bytes())
+        finally:
+            for name, content in originals.items():
+                (ROOT / name / "tasks.json").write_bytes(content)
+
+
+if __name__ == "__main__":
+    unittest.main()

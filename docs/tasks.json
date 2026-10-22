@@ -1,0 +1,534 @@
+[
+  {
+    "id": 1,
+    "level": "zaklady",
+    "topic": "operatory",
+    "type": "write-query",
+    "instruction": "Vyber dostupné produkty.",
+    "prompt": "Vrať nazev produktů s cenou nejvýše 120 a skladem = 1.",
+    "sql": null,
+    "solution": "SELECT nazev FROM produkty WHERE cena <= 120 AND skladem = 1;",
+    "hint": "Obě podmínky spoj pomocí AND.",
+    "theory": "AND vyžaduje splnění obou podmínek. Operátor <= zahrnuje i mezní hodnotu.",
+    "tables": [
+      {
+        "name": "produkty",
+        "columns": [
+          "id NUMBER",
+          "nazev VARCHAR2(30)",
+          "cena NUMBER",
+          "skladem NUMBER"
+        ],
+        "rows": [
+          [
+            1,
+            "Čaj",
+            80,
+            1
+          ],
+          [
+            2,
+            "Káva",
+            150,
+            0
+          ],
+          [
+            3,
+            "Kakao",
+            120,
+            1
+          ]
+        ]
+      }
+    ],
+    "keywords": []
+  },
+  {
+    "id": 2,
+    "level": "zaklady",
+    "topic": "operatory",
+    "type": "find-bug",
+    "instruction": "Oprav podmínku pro interval cen.",
+    "prompt": "Vrať nazev produktů s cenou od 80 do 120 včetně.",
+    "sql": "SELECT nazev FROM produkty WHERE cena BETWEEN 80 OR 120;",
+    "solution": "SELECT nazev FROM produkty WHERE cena BETWEEN 80 AND 120;",
+    "hint": "BETWEEN používá pro oddělení mezí slovo AND, nikoli OR.",
+    "theory": "BETWEEN dolni AND horni zahrnuje obě hranice.",
+    "tables": [
+      {
+        "name": "produkty",
+        "columns": [
+          "id NUMBER",
+          "nazev VARCHAR2(30)",
+          "cena NUMBER",
+          "skladem NUMBER"
+        ],
+        "rows": [
+          [
+            1,
+            "Čaj",
+            80,
+            1
+          ],
+          [
+            2,
+            "Káva",
+            150,
+            0
+          ],
+          [
+            3,
+            "Kakao",
+            120,
+            1
+          ]
+        ]
+      }
+    ],
+    "keywords": []
+  },
+  {
+    "id": 3,
+    "level": "zaklady",
+    "topic": "datum",
+    "type": "write-query",
+    "instruction": "Vyber únorové a pozdější akce.",
+    "prompt": "Vrať id akcí od 1. února 2026 včetně. Použij literál DATE.",
+    "sql": null,
+    "solution": "SELECT id FROM akce WHERE konani >= DATE '2026-02-01';",
+    "hint": "Zápis literálu je DATE 'YYYY-MM-DD'.",
+    "theory": "Literál DATE nezávisí na národním formátu data v databázové relaci.",
+    "tables": [
+      {
+        "name": "akce",
+        "columns": [
+          "id NUMBER",
+          "konani DATE"
+        ],
+        "rows": [
+          [
+            1,
+            "2026-01-15 00:00:00"
+          ],
+          [
+            2,
+            "2026-02-01 14:00:00"
+          ]
+        ]
+      }
+    ],
+    "keywords": []
+  },
+  {
+    "id": 4,
+    "level": "zaklady",
+    "topic": "datum",
+    "type": "explain-result",
+    "instruction": "Vysvětli posun data.",
+    "prompt": "Jaké datum vrátí dotaz? Odpověz ve formátu YYYY-MM-DD.",
+    "sql": "SELECT DATE '2026-01-15' + 1 FROM dual;",
+    "solution": "2026-01-16",
+    "hint": "Přičtení 1 k DATE přidá jeden den.",
+    "theory": "V Oracle lze k DATE přičíst počet dnů; část dne lze vyjádřit zlomkem.",
+    "tables": [],
+    "keywords": [
+      "2026-01-16"
+    ]
+  },
+  {
+    "id": 5,
+    "level": "zaklady",
+    "topic": "retezce",
+    "type": "write-query",
+    "instruction": "Převeď jména na velká písmena.",
+    "prompt": "Vrať UPPER(jmeno) pro všechny osoby.",
+    "sql": null,
+    "solution": "SELECT UPPER(jmeno) FROM lide;",
+    "hint": "Použij funkci UPPER.",
+    "theory": "UPPER převádí písmena na velká, LOWER na malá. Nemění uložená data.",
+    "tables": [
+      {
+        "name": "lide",
+        "columns": [
+          "id NUMBER",
+          "jmeno VARCHAR2(30)"
+        ],
+        "rows": [
+          [
+            1,
+            "Eva"
+          ],
+          [
+            2,
+            "Petr"
+          ],
+          [
+            3,
+            "Ema"
+          ]
+        ]
+      }
+    ],
+    "keywords": []
+  },
+  {
+    "id": 6,
+    "level": "zaklady",
+    "topic": "retezce",
+    "type": "find-bug",
+    "instruction": "Oprav porovnání s textem.",
+    "prompt": "Vrať id osoby se jménem Eva. Oprav druh uvozovek.",
+    "sql": "SELECT id FROM lide WHERE jmeno = \"Eva\";",
+    "solution": "SELECT id FROM lide WHERE jmeno = 'Eva';",
+    "hint": "Textový literál používá jednoduché uvozovky.",
+    "theory": "Jednoduché uvozovky označují řetězec; dvojité označují identifikátor.",
+    "tables": [
+      {
+        "name": "lide",
+        "columns": [
+          "id NUMBER",
+          "jmeno VARCHAR2(30)"
+        ],
+        "rows": [
+          [
+            1,
+            "Eva"
+          ],
+          [
+            2,
+            "Petr"
+          ],
+          [
+            3,
+            "Ema"
+          ]
+        ]
+      }
+    ],
+    "keywords": []
+  },
+  {
+    "id": 7,
+    "level": "zaklady",
+    "topic": "datove-typy",
+    "type": "explain-result",
+    "instruction": "Vysvětli převod typu.",
+    "prompt": "Jakou číselnou hodnotu vrátí dotaz?",
+    "sql": "SELECT CAST('42' AS NUMBER) FROM dual;",
+    "solution": "Vrátí číslo 42, nikoli text.",
+    "hint": "CAST převádí text '42' na NUMBER.",
+    "theory": "CAST(vyraz AS typ) provádí explicitní převod datového typu.",
+    "tables": [],
+    "keywords": [
+      "42"
+    ]
+  },
+  {
+    "id": 8,
+    "level": "zaklady",
+    "topic": "datove-typy",
+    "type": "find-bug",
+    "instruction": "Oprav syntaxi explicitního převodu.",
+    "prompt": "Převeď text '15' na NUMBER pomocí CAST.",
+    "sql": "SELECT CAST('15', NUMBER) FROM dual;",
+    "solution": "SELECT CAST('15' AS NUMBER) FROM dual;",
+    "hint": "Mezi hodnotou a typem patří AS.",
+    "theory": "CAST používá AS, nikoli čárku. Explicitní převody jsou čitelnější než implicitní.",
+    "tables": [],
+    "keywords": []
+  },
+  {
+    "id": 9,
+    "level": "zaklady",
+    "topic": "cisla",
+    "type": "write-query",
+    "instruction": "Zaokrouhli cenu.",
+    "prompt": "Vrať číslo 123.456 zaokrouhlené na dvě desetinná místa pomocí ROUND.",
+    "sql": null,
+    "solution": "SELECT ROUND(123.456, 2) FROM dual;",
+    "hint": "Druhý argument určuje počet desetinných míst.",
+    "theory": "ROUND zaokrouhluje, TRUNC pouze odřezává další desetinná místa.",
+    "tables": [],
+    "keywords": []
+  },
+  {
+    "id": 10,
+    "level": "zaklady",
+    "topic": "cisla",
+    "type": "explain-result",
+    "instruction": "Urči zbytek po dělení.",
+    "prompt": "Jaké číslo vrátí dotaz?",
+    "sql": "SELECT MOD(17, 5) FROM dual;",
+    "solution": "Vrátí 2, protože 17 = 3 × 5 + 2.",
+    "hint": "Najdi zbytek po celočíselném dělení.",
+    "theory": "MOD(m, n) vrací zbytek po dělení m číslem n.",
+    "tables": [],
+    "keywords": [
+      "2"
+    ]
+  },
+  {
+    "id": 11,
+    "level": "zaklady",
+    "topic": "mnozinove-operace",
+    "type": "explain-result",
+    "instruction": "Vysvětli sjednocení.",
+    "prompt": "Které hodnoty id vrátí dotaz? Uveď je jednou; pořadí není zaručeno.",
+    "sql": "SELECT id FROM a UNION SELECT id FROM b;",
+    "solution": "Hodnoty 1, 2 a 3. UNION odstraní duplicity.",
+    "hint": "Hodnota 2 se objeví jen jednou.",
+    "theory": "UNION sjednotí výsledky a odstraní duplicity; pořadí určuje až ORDER BY.",
+    "tables": [
+      {
+        "name": "a",
+        "columns": [
+          "id NUMBER"
+        ],
+        "rows": [
+          [
+            1
+          ],
+          [
+            2
+          ],
+          [
+            2
+          ]
+        ]
+      },
+      {
+        "name": "b",
+        "columns": [
+          "id NUMBER"
+        ],
+        "rows": [
+          [
+            2
+          ],
+          [
+            3
+          ]
+        ]
+      }
+    ],
+    "keywords": [
+      "1",
+      "2",
+      "3"
+    ]
+  },
+  {
+    "id": 12,
+    "level": "zaklady",
+    "topic": "mnozinove-operace",
+    "type": "find-bug",
+    "instruction": "Oprav počet sloupců sjednocení.",
+    "prompt": "Sjednoť pouze sloupec id z obou tabulek bez duplicit.",
+    "sql": "SELECT id FROM a UNION SELECT id, id FROM b;",
+    "solution": "SELECT id FROM a UNION SELECT id FROM b;",
+    "hint": "Obě větve musí mít stejný počet sloupců.",
+    "theory": "Množinové operace vyžadují shodný počet sloupců a kompatibilní typy.",
+    "tables": [
+      {
+        "name": "a",
+        "columns": [
+          "id NUMBER"
+        ],
+        "rows": [
+          [
+            1
+          ],
+          [
+            2
+          ],
+          [
+            2
+          ]
+        ]
+      },
+      {
+        "name": "b",
+        "columns": [
+          "id NUMBER"
+        ],
+        "rows": [
+          [
+            2
+          ],
+          [
+            3
+          ]
+        ]
+      }
+    ],
+    "keywords": []
+  },
+  {
+    "id": 13,
+    "level": "pokrocile",
+    "topic": "operatory",
+    "type": "find-bug",
+    "instruction": "Oprav prioritu logických operátorů.",
+    "prompt": "Vrať nazev produktů s cenou pod 100 nebo nad 140, ale vždy pouze skladem = 1.",
+    "sql": "SELECT nazev FROM produkty WHERE cena < 100 OR cena > 140 AND skladem = 1;",
+    "solution": "SELECT nazev FROM produkty WHERE (cena < 100 OR cena > 140) AND skladem = 1;",
+    "hint": "Uzavři alternativy cen do závorek.",
+    "theory": "AND má vyšší prioritu než OR. Závorky umožňují určit pořadí vyhodnocení.",
+    "tables": [
+      {
+        "name": "produkty",
+        "columns": [
+          "id NUMBER",
+          "nazev VARCHAR2(30)",
+          "cena NUMBER",
+          "skladem NUMBER"
+        ],
+        "rows": [
+          [
+            1,
+            "Čaj",
+            80,
+            1
+          ],
+          [
+            2,
+            "Káva",
+            150,
+            0
+          ],
+          [
+            3,
+            "Kakao",
+            120,
+            1
+          ]
+        ]
+      }
+    ],
+    "keywords": []
+  },
+  {
+    "id": 14,
+    "level": "pokrocile",
+    "topic": "datum",
+    "type": "write-query",
+    "instruction": "Vyber všechny akce během února.",
+    "prompt": "Vrať id akcí v únoru 2026 včetně libovolného času posledního dne. Použij >= a < s literály DATE.",
+    "sql": null,
+    "solution": "SELECT id FROM akce WHERE konani >= DATE '2026-02-01' AND konani < DATE '2026-03-01';",
+    "hint": "Horní hranice je první okamžik následujícího měsíce, který již nepatří do výsledku.",
+    "theory": "Oracle DATE ukládá i čas. Polootevřený interval zahrne celý poslední den bez převodu sloupce.",
+    "tables": [
+      {
+        "name": "akce",
+        "columns": [
+          "id NUMBER",
+          "konani DATE"
+        ],
+        "rows": [
+          [
+            1,
+            "2026-01-15 00:00:00"
+          ],
+          [
+            2,
+            "2026-02-01 14:00:00"
+          ]
+        ]
+      }
+    ],
+    "keywords": []
+  },
+  {
+    "id": 15,
+    "level": "pokrocile",
+    "topic": "retezce",
+    "type": "explain-result",
+    "instruction": "Vysvětli oříznutí a výřez řetězce.",
+    "prompt": "Jaký přesný text vrátí dotaz?",
+    "sql": "SELECT SUBSTR(TRIM('  SQL kurz  '), 1, 3) FROM dual;",
+    "solution": "Vrátí text SQL.",
+    "hint": "Nejprve se odstraní okrajové mezery, pak se vyberou první tři znaky.",
+    "theory": "TRIM odstraňuje okrajové mezery. SUBSTR v Oracle počítá pozice od 1.",
+    "tables": [],
+    "keywords": [
+      "SQL"
+    ]
+  },
+  {
+    "id": 16,
+    "level": "pokrocile",
+    "topic": "datove-typy",
+    "type": "write-query",
+    "instruction": "Převeď text na datum se zadaným formátem.",
+    "prompt": "Převeď text '31.12.2026' pomocí TO_DATE a masky DD.MM.YYYY.",
+    "sql": null,
+    "solution": "SELECT TO_DATE('31.12.2026', 'DD.MM.YYYY') FROM dual;",
+    "hint": "Druhým argumentem je formátovací maska.",
+    "theory": "TO_DATE s explicitní maskou nevyžaduje implicitní interpretaci vstupu podle NLS_DATE_FORMAT.",
+    "tables": [],
+    "keywords": []
+  },
+  {
+    "id": 17,
+    "level": "pokrocile",
+    "topic": "cisla",
+    "type": "find-bug",
+    "instruction": "Oprav zaokrouhlení na stovky.",
+    "prompt": "Použij ROUND tak, aby se 1499 zaokrouhlilo na celé stovky.",
+    "sql": "SELECT ROUND(1499, 2) FROM dual;",
+    "solution": "SELECT ROUND(1499, -2) FROM dual;",
+    "hint": "Pro místa vlevo od desetinné čárky použij záporný argument.",
+    "theory": "ROUND(n, -2) zaokrouhluje na stovky; ROUND(n, 2) na setiny.",
+    "tables": [],
+    "keywords": []
+  },
+  {
+    "id": 18,
+    "level": "pokrocile",
+    "topic": "mnozinove-operace",
+    "type": "explain-result",
+    "instruction": "Vysvětli rozdíl množin.",
+    "prompt": "Která hodnota id zbude po operaci MINUS?",
+    "sql": "SELECT id FROM a MINUS SELECT id FROM b;",
+    "solution": "Zbude pouze 1. Hodnota 2 je také v b, proto je odstraněna.",
+    "hint": "MINUS ponechá hodnoty první větve, které nejsou v druhé.",
+    "theory": "Oracle MINUS vrací rozdíl množin bez duplicit. Na pořadí větví záleží.",
+    "tables": [
+      {
+        "name": "a",
+        "columns": [
+          "id NUMBER"
+        ],
+        "rows": [
+          [
+            1
+          ],
+          [
+            2
+          ],
+          [
+            2
+          ]
+        ]
+      },
+      {
+        "name": "b",
+        "columns": [
+          "id NUMBER"
+        ],
+        "rows": [
+          [
+            2
+          ],
+          [
+            3
+          ]
+        ]
+      }
+    ],
+    "keywords": [
+      "1"
+    ]
+  }
+]

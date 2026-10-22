@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SQL trenažér · Prezentace</title>
+  <link rel="stylesheet" href="./styles.css">
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header class="hero">
+      <p class="eyebrow">ORACLE SQL · OD TEORIE K PRAXI</p>
+      <h1>SQL trenažér z prezentace</h1>
+      <p>Procvičuj jednotlivá témata vlastním tempem.</p>
+    </header>
+    <section class="card" aria-labelledby="selection-heading">
+      <h2 id="selection-heading">Vyber si úlohu</h2>
+      <div class="controls">
+        <label>Úroveň
+          <select id="level">
+            <option value="zaklady">Základy</option>
+            <option value="pokrocile">Pokročilé</option>
+          </select>
+        </label>
+        <label>Typ úlohy
+          <select id="task-type">
+            <option value="write-query">Napiš dotaz</option>
+            <option value="find-bug">Oprav chybu</option>
+            <option value="explain-result">Vysvětli výsledek</option>
+          </select>
+        </label>
+        <label>Téma
+          <select id="topic"><option value="">Všechna témata</option></select>
+        </label>
+        <button id="load" disabled>Spustit</button>
+      </div>
+      <p>Změň výběr a klikni na Spustit. Další úloha prochází stejný výběr postupně.</p>
+    </section>
+    <section class="card task-panel" aria-labelledby="task-heading">
+      <p id="position"></p>
+      <h2 id="task-heading">Zadání</h2>
+      <p id="instruction"></p>
+      <p id="prompt" role="status">Načítám katalog úloh…</p>
+      <div id="tables"></div>
+      <section id="sql-section" hidden>
+        <h3>SQL k rozboru nebo opravě</h3>
+        <pre id="sql"></pre>
+      </section>
+      <section id="theory-section" hidden>
+        <h3>Teorie</h3>
+        <p id="theory"></p>
+      </section>
+    </section>
+    <form id="answer-form" class="card">
+      <label for="answer">Tvoje odpověď</label>
+      <textarea id="answer" rows="7" spellcheck="false" disabled aria-describedby="rules"></textarea>
+      <p id="rules">SQL se neprovádí. Kontrola porovnává zápis se vzorem (ignoruje mezery a velikost SQL klíčových slov); vysvětlení hledá klíčová slova. Jiná správná řešení nemusí rozpoznat.</p>
+      <div class="actions">
+        <button id="check" type="submit" disabled>Zkontrolovat odpověď</button>
+        <button id="hint-button" type="button" class="secondary" disabled>Nápověda</button>
+        <button id="solution-button" type="button" class="secondary" disabled>Ukázat řešení</button>
+        <button id="next" type="button" class="secondary" disabled>Další úloha</button>
+      </div>
+      <p id="feedback" role="status" aria-live="polite"></p>
+      <section id="hint-section" hidden><h3>Nápověda</h3><p id="hint"></p></section>
+      <section id="solution-section" hidden><h3>Vzorové řešení</h3><pre id="solution"></pre></section>
+    </form>
+    <footer>Bez databáze a bez odesílání odpovědí. Vzorová řešení jsou veřejnou součástí katalogu.</footer>
+    <noscript>Pro používání trenažéru povol JavaScript.</noscript>
+  </main>
+</body>
+</html>
