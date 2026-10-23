@@ -1,0 +1,609 @@
+[
+  {
+    "id": 1, "level": "zaklady", "topic": "select", "type": "write-query",
+    "instruction": "Vyber identifikátory a názvy produktů.",
+    "prompt": "Z tabulky produkty vrať sloupce id a nazev. Zachovej všechny řádky.",
+    "sql": null, "solution": "SELECT id, nazev FROM produkty;",
+    "hint": "Za SELECT uveď požadované sloupce a za FROM název tabulky.",
+    "theory": "SELECT určuje sloupce výsledku; FROM určuje zdrojové řádky.",
+    "tables": [{"name": "produkty", "columns": ["id NUMBER", "nazev VARCHAR2(30)", "cena NUMBER", "skladem NUMBER"], "rows": [[1, "Čaj", 80, 1], [2, "Káva", 150, 0], [3, "Kakao", 120, 1]]}],
+    "keywords": []
+  },
+  {
+    "id": 2, "level": "zaklady", "topic": "select", "type": "write-query",
+    "instruction": "Vypiš jedinečná oddělení.",
+    "prompt": "Z tabulky zamestnanci vypiš každé oddeleni právě jednou a seřaď je vzestupně.",
+    "sql": null, "solution": "SELECT DISTINCT oddeleni FROM zamestnanci ORDER BY oddeleni;",
+    "hint": "DISTINCT odstraňuje duplicity; ORDER BY určí pořadí výsledku.",
+    "theory": "DISTINCT se aplikuje na kombinaci vybraných sloupců.",
+    "tables": [{"name": "zamestnanci", "columns": ["id NUMBER", "jmeno VARCHAR2(30)", "oddeleni VARCHAR2(20)", "mzda NUMBER"], "rows": [[1, "Eva", "Data", 45000], [2, "Petr", "Data", 50000], [3, "Iva", "Prodej", 40000]]}],
+    "keywords": []
+  },
+  {
+    "id": 3, "level": "zaklady", "topic": "select", "type": "explain-result",
+    "instruction": "Urči pořadí produktů.",
+    "prompt": "V jakém pořadí vrátí dotaz názvy produktů? Uveď je od prvního po poslední.",
+    "sql": "SELECT nazev FROM produkty ORDER BY cena DESC;",
+    "solution": "Káva, Kakao, Čaj. ORDER BY cena DESC řadí ceny sestupně.",
+    "hint": "DESC znamená sestupné řazení podle ceny.",
+    "theory": "Bez ORDER BY není pořadí řádků zaručeno.",
+    "tables": [{"name": "produkty", "columns": ["id NUMBER", "nazev VARCHAR2(30)", "cena NUMBER"], "rows": [[1, "Čaj", 80], [2, "Káva", 150], [3, "Kakao", 120]]}],
+    "keywords": ["Káva", "Kakao", "Čaj"]
+  },
+  {
+    "id": 4, "level": "zaklady", "topic": "operatory", "type": "write-query",
+    "instruction": "Vyber produkty v cenovém rozmezí.",
+    "prompt": "Vrať názvy produktů s cenou od 80 do 120 včetně. Použij BETWEEN.",
+    "sql": null, "solution": "SELECT nazev FROM produkty WHERE cena BETWEEN 80 AND 120;",
+    "hint": "BETWEEN zahrnuje dolní i horní hranici.",
+    "theory": "Podmínka BETWEEN a AND b odpovídá intervalu včetně obou konců.",
+    "tables": [{"name": "produkty", "columns": ["id NUMBER", "nazev VARCHAR2(30)", "cena NUMBER"], "rows": [[1, "Čaj", 80], [2, "Káva", 150], [3, "Kakao", 120]]}],
+    "keywords": []
+  },
+  {
+    "id": 5, "level": "zaklady", "topic": "operatory", "type": "write-query",
+    "instruction": "Vyber názvy podle vzoru.",
+    "prompt": "Vrať názvy produktů začínající písmenem K. Použij LIKE a zástupný znak.",
+    "sql": null, "solution": "SELECT nazev FROM produkty WHERE nazev LIKE 'K%';",
+    "hint": "Pro libovolný počet dalších znaků použij %.",
+    "theory": "LIKE porovnává textový vzor; % zastupuje libovolnou posloupnost znaků.",
+    "tables": [{"name": "produkty", "columns": ["id NUMBER", "nazev VARCHAR2(30)", "cena NUMBER"], "rows": [[1, "Čaj", 80], [2, "Káva", 150], [3, "Kakao", 120]]}],
+    "keywords": []
+  },
+  {
+    "id": 6, "level": "zaklady", "topic": "operatory", "type": "explain-result",
+    "instruction": "Vysvětli seznam hodnot v IN.",
+    "prompt": "Které názvy vrátí dotaz? Uveď oba, pořadí není zaručeno.",
+    "sql": "SELECT nazev FROM produkty WHERE nazev IN ('Čaj', 'Kakao');",
+    "solution": "Čaj a Kakao. IN ověří, zda název odpovídá některé hodnotě seznamu.",
+    "hint": "Porovnej název s oběma textovými hodnotami.",
+    "theory": "IN se seznamem je stručný zápis pro několik alternativ spojených OR.",
+    "tables": [{"name": "produkty", "columns": ["id NUMBER", "nazev VARCHAR2(30)", "cena NUMBER"], "rows": [[1, "Čaj", 80], [2, "Káva", 150], [3, "Kakao", 120]]}],
+    "keywords": ["Čaj", "Kakao"]
+  },
+  {
+    "id": 7, "level": "zaklady", "topic": "datove-typy", "type": "write-query",
+    "instruction": "Převeď text na datum.",
+    "prompt": "Převeď text '31.12.2026' na datum pomocí TO_DATE a masky DD.MM.YYYY.",
+    "sql": null, "solution": "SELECT TO_DATE('31.12.2026', 'DD.MM.YYYY') FROM dual;",
+    "hint": "Formátovací maska je druhým argumentem TO_DATE.",
+    "theory": "Explicitní maska určuje interpretaci textu nezávisle na implicitním formátu relace.",
+    "tables": [], "keywords": []
+  },
+  {
+    "id": 8, "level": "zaklady", "topic": "datove-typy", "type": "explain-result",
+    "instruction": "Rozliš číslo a text.",
+    "prompt": "Co vrátí TO_CHAR a jakého typu bude výsledek?",
+    "sql": "SELECT TO_CHAR(42) FROM dual;",
+    "solution": "Text '42'; TO_CHAR převádí číslo na znakový typ.",
+    "hint": "Název funkce napovídá cílový datový typ.",
+    "theory": "TO_CHAR vytváří textovou reprezentaci čísla nebo data.",
+    "tables": [], "keywords": ["42", "text"]
+  },
+  {
+    "id": 9, "level": "zaklady", "topic": "datum", "type": "write-query",
+    "instruction": "Posuň datum o měsíc.",
+    "prompt": "Vrať datum o jeden měsíc později než 15. ledna 2026 pomocí ADD_MONTHS.",
+    "sql": null, "solution": "SELECT ADD_MONTHS(DATE '2026-01-15', 1) FROM dual;",
+    "hint": "ADD_MONTHS přijímá datum a počet měsíců.",
+    "theory": "ADD_MONTHS posouvá datum o určený počet kalendářních měsíců.",
+    "tables": [], "keywords": []
+  },
+  {
+    "id": 10, "level": "zaklady", "topic": "datum", "type": "explain-result",
+    "instruction": "Najdi poslední den měsíce.",
+    "prompt": "Jaké datum vrátí dotaz pro zadaný únor?",
+    "sql": "SELECT LAST_DAY(DATE '2026-02-10') FROM dual;",
+    "solution": "2026-02-28. LAST_DAY vrátí poslední den února 2026.",
+    "hint": "Rok 2026 není přestupný.",
+    "theory": "LAST_DAY vrací poslední kalendářní den měsíce vstupního data.",
+    "tables": [], "keywords": ["2026-02-28"]
+  },
+  {
+    "id": 11, "level": "zaklady", "topic": "retezce", "type": "write-query",
+    "instruction": "Uprav velikost písmen.",
+    "prompt": "Vrať názvy produktů převedené na velká písmena.",
+    "sql": null, "solution": "SELECT UPPER(nazev) FROM produkty;",
+    "hint": "Použij UPPER nad sloupcem nazev.",
+    "theory": "UPPER převádí text na velká písmena; LOWER na malá.",
+    "tables": [{"name": "produkty", "columns": ["id NUMBER", "nazev VARCHAR2(30)"], "rows": [[1, "Čaj"], [2, "Káva"]]}],
+    "keywords": []
+  },
+  {
+    "id": 12, "level": "zaklady", "topic": "retezce", "type": "write-query",
+    "instruction": "Najdi část názvu.",
+    "prompt": "Vrať první tři znaky každého názvu produktu pomocí SUBSTR.",
+    "sql": null, "solution": "SELECT SUBSTR(nazev, 1, 3) FROM produkty;",
+    "hint": "Oracle počítá pozice v SUBSTR od jedničky.",
+    "theory": "SUBSTR(text, začátek, délka) vrací část řetězce.",
+    "tables": [{"name": "produkty", "columns": ["id NUMBER", "nazev VARCHAR2(30)"], "rows": [[1, "Čaj"], [2, "Káva"]]}],
+    "keywords": []
+  },
+  {
+    "id": 13, "level": "zaklady", "topic": "retezce", "type": "explain-result",
+    "instruction": "Vysvětli úpravu řetězce.",
+    "prompt": "Jaký přesný text vrátí dotaz?",
+    "sql": "SELECT REPLACE(TRIM('  SQL kurz  '), 'kurz', 'trénink') FROM dual;",
+    "solution": "SQL trénink. TRIM odstraní krajní mezery a REPLACE změní slovo.",
+    "hint": "Nejprve se vyhodnotí vnitřní TRIM.",
+    "theory": "TRIM odstraňuje okrajové mezery; REPLACE nahrazuje výskyt podřetězce.",
+    "tables": [], "keywords": ["SQL", "trénink"]
+  },
+  {
+    "id": 14, "level": "zaklady", "topic": "cisla", "type": "write-query",
+    "instruction": "Zaokrouhli číslo.",
+    "prompt": "Vrať hodnotu 123.456 zaokrouhlenou na dvě desetinná místa pomocí ROUND.",
+    "sql": null, "solution": "SELECT ROUND(123.456, 2) FROM dual;",
+    "hint": "Druhý argument určuje počet desetinných míst.",
+    "theory": "ROUND zaokrouhluje; TRUNC desetinná místa pouze odřezává.",
+    "tables": [], "keywords": []
+  },
+  {
+    "id": 15, "level": "zaklady", "topic": "cisla", "type": "explain-result",
+    "instruction": "Urči zbytek po dělení.",
+    "prompt": "Jaké celé číslo vrátí dotaz?",
+    "sql": "SELECT MOD(17, 5) FROM dual;",
+    "solution": "2. Pět se do 17 vejde třikrát a zbytek je 2.",
+    "hint": "Využij vztah 17 = 3 × 5 + zbytek.",
+    "theory": "MOD(m, n) vrací zbytek po dělení m číslem n.",
+    "tables": [], "keywords": ["2"]
+  },
+  {
+    "id": 16, "level": "zaklady", "topic": "mnozinove-operace", "type": "write-query",
+    "instruction": "Spoj výsledky včetně duplicit.",
+    "prompt": "Vrať id z tabulek a a b a zachovej duplicity mezi oběma výsledky.",
+    "sql": null, "solution": "SELECT id FROM a UNION ALL SELECT id FROM b;",
+    "hint": "Pro zachování duplicit použij UNION ALL.",
+    "theory": "UNION ALL připojí výsledky obou větví bez odstranění duplicit.",
+    "tables": [{"name": "a", "columns": ["id NUMBER"], "rows": [[1], [2], [2]]}, {"name": "b", "columns": ["id NUMBER"], "rows": [[2], [3]]}],
+    "keywords": []
+  },
+  {
+    "id": 17, "level": "zaklady", "topic": "mnozinove-operace", "type": "explain-result",
+    "instruction": "Vysvětli průnik množin.",
+    "prompt": "Které hodnoty id vrátí dotaz? Každou uveď jednou.",
+    "sql": "SELECT id FROM a INTERSECT SELECT id FROM b;",
+    "solution": "Pouze 2. INTERSECT vrací společné hodnoty bez duplicit.",
+    "hint": "Hledej hodnoty přítomné v obou tabulkách.",
+    "theory": "INTERSECT vrací průnik výsledků; duplicity odstraňuje.",
+    "tables": [{"name": "a", "columns": ["id NUMBER"], "rows": [[1], [2], [2]]}, {"name": "b", "columns": ["id NUMBER"], "rows": [[2], [3]]}],
+    "keywords": ["2"]
+  },
+  {
+    "id": 18, "level": "zaklady", "topic": "agregace", "type": "write-query",
+    "instruction": "Sečti mzdy podle oddělení.",
+    "prompt": "Vrať oddeleni a součet mezd v každém oddělení. Pojmenuj součet celkem.",
+    "sql": null, "solution": "SELECT oddeleni, SUM(mzda) AS celkem FROM zamestnanci GROUP BY oddeleni;",
+    "hint": "Neagregovaný sloupec oddeleni musí být v GROUP BY.",
+    "theory": "GROUP BY vytváří skupiny, nad kterými agregace počítá jednu hodnotu.",
+    "tables": [{"name": "zamestnanci", "columns": ["id NUMBER", "jmeno VARCHAR2(30)", "oddeleni VARCHAR2(20)", "mzda NUMBER"], "rows": [[1, "Eva", "Data", 45000], [2, "Petr", "Data", 50000], [3, "Iva", "Prodej", 40000]]}],
+    "keywords": []
+  },
+  {
+    "id": 19, "level": "zaklady", "topic": "agregace", "type": "write-query",
+    "instruction": "Filtruj skupiny pomocí HAVING.",
+    "prompt": "Vrať oddělení, jejichž průměrná mzda je alespoň 45 000.",
+    "sql": null, "solution": "SELECT oddeleni, AVG(mzda) FROM zamestnanci GROUP BY oddeleni HAVING AVG(mzda) >= 45000;",
+    "hint": "HAVING filtruje skupiny po GROUP BY.",
+    "theory": "WHERE filtruje řádky před seskupením; HAVING filtruje vytvořené skupiny.",
+    "tables": [{"name": "zamestnanci", "columns": ["id NUMBER", "jmeno VARCHAR2(30)", "oddeleni VARCHAR2(20)", "mzda NUMBER"], "rows": [[1, "Eva", "Data", 45000], [2, "Petr", "Data", 50000], [3, "Iva", "Prodej", 40000]]}],
+    "keywords": []
+  },
+  {
+    "id": 20, "level": "zaklady", "topic": "agregace", "type": "explain-result",
+    "instruction": "Porovnej COUNT hvězdičkou a sloupcem.",
+    "prompt": "Jaké dvě hodnoty vrátí dotaz pro tři řádky, z nichž jeden bonus je NULL?",
+    "sql": "SELECT COUNT(*), COUNT(bonus) FROM odmeny;",
+    "solution": "COUNT(*) vrátí 3 a COUNT(bonus) vrátí 2, protože ignoruje NULL.",
+    "hint": "COUNT(*) počítá řádky; COUNT(sloupec) jen nenulové hodnoty.",
+    "theory": "Agregační funkce COUNT(sloupec) nepočítá hodnoty NULL.",
+    "tables": [{"name": "odmeny", "columns": ["id NUMBER", "bonus NUMBER"], "rows": [[1, 100], [2, null], [3, 50]]}],
+    "keywords": ["3", "2", "NULL"]
+  },
+  {
+    "id": 21, "level": "zaklady", "topic": "agregace", "type": "write-query",
+    "instruction": "Zjisti krajní hodnoty.",
+    "prompt": "Vrať nejnižší a nejvyšší cenu z tabulky produkty.",
+    "sql": null, "solution": "SELECT MIN(cena), MAX(cena) FROM produkty;",
+    "hint": "Použij dvě agregační funkce nad stejným sloupcem.",
+    "theory": "MIN a MAX vrací nejmenší a největší hodnotu ve skupině.",
+    "tables": [{"name": "produkty", "columns": ["id NUMBER", "nazev VARCHAR2(30)", "cena NUMBER"], "rows": [[1, "Čaj", 80], [2, "Káva", 150], [3, "Kakao", 120]]}],
+    "keywords": []
+  },
+  {
+    "id": 22, "level": "zaklady", "topic": "podminky", "type": "write-query",
+    "instruction": "Zařaď produkty do kategorií.",
+    "prompt": "Vrať nazev a kategorii: cena alespoň 120 znamená 'dražší', jinak 'levnější'. Použij CASE.",
+    "sql": null, "solution": "SELECT nazev, CASE WHEN cena >= 120 THEN 'dražší' ELSE 'levnější' END AS kategorie FROM produkty;",
+    "hint": "CASE WHEN podmínka THEN hodnota ELSE hodnota END.",
+    "theory": "Prohledávaný CASE vyhodnocuje podmínky WHEN v pořadí.",
+    "tables": [{"name": "produkty", "columns": ["id NUMBER", "nazev VARCHAR2(30)", "cena NUMBER"], "rows": [[1, "Čaj", 80], [2, "Káva", 150], [3, "Kakao", 120]]}],
+    "keywords": []
+  },
+  {
+    "id": 23, "level": "zaklady", "topic": "podminky", "type": "explain-result",
+    "instruction": "Vysvětli DECODE.",
+    "prompt": "Jaký text vrátí DECODE pro hodnotu stavu 'A'?",
+    "sql": "SELECT DECODE('A', 'A', 'aktivní', 'neaktivní') FROM dual;",
+    "solution": "aktivní. DECODE našel shodu 'A' a vrátil odpovídající hodnotu.",
+    "hint": "Po výrazu následuje dvojice hledaná hodnota, výsledek.",
+    "theory": "DECODE porovná výraz s možnostmi a vrátí odpovídající výsledek.",
+    "tables": [], "keywords": ["aktivní"]
+  },
+  {
+    "id": 24, "level": "zaklady", "topic": "poddotazy", "type": "write-query",
+    "instruction": "Použij skalární poddotaz.",
+    "prompt": "Vrať produkty s cenou vyšší než průměrná cena všech produktů.",
+    "sql": null, "solution": "SELECT nazev FROM produkty WHERE cena > (SELECT AVG(cena) FROM produkty);",
+    "hint": "Poddotaz s AVG vrací jednu hodnotu použitelnou ve WHERE.",
+    "theory": "Skalární poddotaz vrací jednu hodnotu a lze jej použít ve výrazu.",
+    "tables": [{"name": "produkty", "columns": ["id NUMBER", "nazev VARCHAR2(30)", "cena NUMBER"], "rows": [[1, "Čaj", 80], [2, "Káva", 150], [3, "Kakao", 120]]}],
+    "keywords": []
+  },
+  {
+    "id": 25, "level": "zaklady", "topic": "poddotazy", "type": "write-query",
+    "instruction": "Filtruj podle výsledku poddotazu.",
+    "prompt": "Vrať jména zaměstnanců z oddělení Data. Použij IN s poddotazem, který vrací názvy oddělení.",
+    "sql": null, "solution": "SELECT jmeno FROM zamestnanci WHERE oddeleni IN (SELECT nazev FROM oddeleni WHERE nazev = 'Data');",
+    "hint": "Poddotaz v IN dodá množinu hodnot pro porovnání.",
+    "theory": "Poddotaz v IN může vracet více řádků.",
+    "tables": [{"name": "zamestnanci", "columns": ["id NUMBER", "jmeno VARCHAR2(30)", "oddeleni VARCHAR2(20)"], "rows": [[1, "Eva", "Data"], [2, "Petr", "Data"], [3, "Iva", "Prodej"]]}, {"name": "oddeleni", "columns": ["id NUMBER", "nazev VARCHAR2(20)"], "rows": [[1, "Data"], [2, "Prodej"]]}],
+    "keywords": []
+  },
+  {
+    "id": 26, "level": "zaklady", "topic": "poddotazy", "type": "write-query",
+    "instruction": "Ověř existenci souvisejícího řádku.",
+    "prompt": "Vrať oddělení, ve kterých pracuje alespoň jeden zaměstnanec. Použij EXISTS.",
+    "sql": null, "solution": "SELECT o.nazev FROM oddeleni o WHERE EXISTS (SELECT 1 FROM zamestnanci z WHERE z.oddeleni_id = o.id);",
+    "hint": "Vnitřní dotaz propojí zaměstnance s aktuálním oddělením.",
+    "theory": "EXISTS je pravdivé, pokud poddotaz vrátí alespoň jeden řádek.",
+    "tables": [{"name": "oddeleni", "columns": ["id NUMBER", "nazev VARCHAR2(20)"], "rows": [[1, "Data"], [2, "Prodej"], [3, "Archiv"]]}, {"name": "zamestnanci", "columns": ["id NUMBER", "jmeno VARCHAR2(30)", "oddeleni_id NUMBER"], "rows": [[1, "Eva", 1], [2, "Petr", 1], [3, "Iva", 2]]}],
+    "keywords": []
+  },
+  {
+    "id": 27, "level": "zaklady", "topic": "poddotazy", "type": "explain-result",
+    "instruction": "Vysvětli skalární poddotaz.",
+    "prompt": "Jaké číslo vrátí dotaz při cenách 80, 120 a 160?",
+    "sql": "SELECT cena - (SELECT AVG(cena) FROM produkty) FROM produkty WHERE id = 2;",
+    "solution": "40. Průměr cen je 120 a cena druhého produktu je 160.",
+    "hint": "Nejprve vypočítej průměr tří cen a pak odečti.",
+    "theory": "V tomto dotazu vrací AVG skalární poddotaz jednu číselnou hodnotu.",
+    "tables": [{"name": "produkty", "columns": ["id NUMBER", "cena NUMBER"], "rows": [[1, 80], [2, 160], [3, 120]]}],
+    "keywords": ["40", "120", "160"]
+  },
+  {
+    "id": 28, "level": "zaklady", "topic": "null", "type": "write-query",
+    "instruction": "Nahraď chybějící hodnotu.",
+    "prompt": "Vrať id a bonus zaměstnanců; pokud je bonus NULL, zobraz 0 pomocí NVL.",
+    "sql": null, "solution": "SELECT id, NVL(bonus, 0) AS bonus FROM odmeny;",
+    "hint": "NVL přijímá výraz a náhradní hodnotu.",
+    "theory": "NVL(výraz, náhrada) vrátí náhradu, pokud je výraz NULL.",
+    "tables": [{"name": "odmeny", "columns": ["id NUMBER", "bonus NUMBER"], "rows": [[1, 100], [2, null], [3, 50]]}],
+    "keywords": []
+  },
+  {
+    "id": 29, "level": "zaklady", "topic": "null", "type": "explain-result",
+    "instruction": "Vyhodnoť počítání NULL.",
+    "prompt": "Jaký výsledek vrátí dotaz pro tabulku se třemi bonusy, z nichž jeden je NULL?",
+    "sql": "SELECT COUNT(bonus) FROM odmeny;",
+    "solution": "2. COUNT(bonus) ignoruje řádek, ve kterém je bonus NULL.",
+    "hint": "COUNT se sloupcem počítá pouze hodnoty, které nejsou NULL.",
+    "theory": "Porovnání s NULL se zapisuje IS NULL; NULL není běžná hodnota.",
+    "tables": [{"name": "odmeny", "columns": ["id NUMBER", "bonus NUMBER"], "rows": [[1, 100], [2, null], [3, 50]]}],
+    "keywords": ["2", "NULL"]
+  },
+  {
+    "id": 30, "level": "zaklady", "topic": "joiny", "type": "write-query",
+    "instruction": "Spoj zaměstnance s oddělením.",
+    "prompt": "Vrať jméno zaměstnance a název jeho oddělení. Použij INNER JOIN.",
+    "sql": null, "solution": "SELECT z.jmeno, o.nazev FROM zamestnanci z INNER JOIN oddeleni o ON o.id = z.oddeleni_id;",
+    "hint": "Spojovací podmínka porovná cizí klíč s id oddělení.",
+    "theory": "INNER JOIN vrací pouze řádky se shodou na obou stranách.",
+    "tables": [{"name": "zamestnanci", "columns": ["id NUMBER", "jmeno VARCHAR2(30)", "oddeleni_id NUMBER"], "rows": [[1, "Eva", 1], [2, "Petr", 1], [3, "Iva", 2]]}, {"name": "oddeleni", "columns": ["id NUMBER", "nazev VARCHAR2(20)"], "rows": [[1, "Data"], [2, "Prodej"]]}],
+    "keywords": []
+  },
+  {
+    "id": 31, "level": "zaklady", "topic": "joiny", "type": "write-query",
+    "instruction": "Zachovej i oddělení bez zaměstnanců.",
+    "prompt": "Vypiš všechna oddělení a případné jméno zaměstnance. Použij LEFT JOIN od oddeleni.",
+    "sql": null, "solution": "SELECT o.nazev, z.jmeno FROM oddeleni o LEFT JOIN zamestnanci z ON z.oddeleni_id = o.id;",
+    "hint": "Tabulka, jejíž všechny řádky zachováš, je vlevo od LEFT JOIN.",
+    "theory": "LEFT JOIN doplní NULL na pravé straně, pokud protějšek neexistuje.",
+    "tables": [{"name": "oddeleni", "columns": ["id NUMBER", "nazev VARCHAR2(20)"], "rows": [[1, "Data"], [2, "Prodej"], [3, "Archiv"]]}, {"name": "zamestnanci", "columns": ["id NUMBER", "jmeno VARCHAR2(30)", "oddeleni_id NUMBER"], "rows": [[1, "Eva", 1], [2, "Petr", 1], [3, "Iva", 2]]}],
+    "keywords": []
+  },
+  {
+    "id": 32, "level": "zaklady", "topic": "joiny", "type": "write-query",
+    "instruction": "Spoj úplným vnějším spojení.",
+    "prompt": "Vrať všechna oddělení i všechny zaměstnance, včetně řádků bez protějšku.",
+    "sql": null, "solution": "SELECT o.nazev, z.jmeno FROM oddeleni o FULL OUTER JOIN zamestnanci z ON z.oddeleni_id = o.id;",
+    "hint": "Použij FULL OUTER JOIN a propojení přes oddeleni_id.",
+    "theory": "FULL OUTER JOIN zachovává shodné i nespárované řádky z obou tabulek.",
+    "tables": [{"name": "oddeleni", "columns": ["id NUMBER", "nazev VARCHAR2(20)"], "rows": [[1, "Data"], [3, "Archiv"]]}, {"name": "zamestnanci", "columns": ["id NUMBER", "jmeno VARCHAR2(30)", "oddeleni_id NUMBER"], "rows": [[1, "Eva", 1], [2, "Petr", 9]]}],
+    "keywords": []
+  },
+  {
+    "id": 33, "level": "zaklady", "topic": "joiny", "type": "explain-result",
+    "instruction": "Vysvětli násobení řádků při spojení.",
+    "prompt": "Kolik výsledných řádků vrátí dotaz, pokud oddělení Data obsahuje dva zaměstnance?",
+    "sql": "SELECT o.nazev, z.jmeno FROM oddeleni o JOIN zamestnanci z ON z.oddeleni_id = o.id WHERE o.nazev = 'Data';",
+    "solution": "2 řádky. Každý zaměstnanec oddělení Data vytvoří jednu shodu.",
+    "hint": "Spojení vrací řádek pro každou odpovídající dvojici.",
+    "theory": "Spojení může násobit řádky, pokud má jedna strana více shod.",
+    "tables": [{"name": "oddeleni", "columns": ["id NUMBER", "nazev VARCHAR2(20)"], "rows": [[1, "Data"]]}, {"name": "zamestnanci", "columns": ["id NUMBER", "jmeno VARCHAR2(30)", "oddeleni_id NUMBER"], "rows": [[1, "Eva", 1], [2, "Petr", 1]]}],
+    "keywords": ["2"]
+  },
+  {
+    "id": 34, "level": "zaklady", "topic": "cte", "type": "write-query",
+    "instruction": "Pojmenuj mezivýsledek pomocí WITH.",
+    "prompt": "Pomocí CTE s názvem drahe vypiš názvy produktů s cenou vyšší než 100.",
+    "sql": null, "solution": "WITH drahe AS (SELECT nazev, cena FROM produkty WHERE cena > 100) SELECT nazev FROM drahe;",
+    "hint": "CTE definuj za WITH a následně ji použij v hlavním dotazu.",
+    "theory": "WITH pojmenovává poddotaz platný pro následující SQL příkaz.",
+    "tables": [{"name": "produkty", "columns": ["id NUMBER", "nazev VARCHAR2(30)", "cena NUMBER"], "rows": [[1, "Čaj", 80], [2, "Káva", 150], [3, "Kakao", 120]]}],
+    "keywords": []
+  },
+  {
+    "id": 35, "level": "zaklady", "topic": "cte", "type": "explain-result",
+    "instruction": "Urči výsledek CTE.",
+    "prompt": "Jaký součet cen vrátí dotaz?",
+    "sql": "WITH dostupne AS (SELECT cena FROM produkty WHERE skladem = 1) SELECT SUM(cena) FROM dostupne;",
+    "solution": "200. CTE obsahuje ceny dostupných produktů 80 a 120.",
+    "hint": "Nejprve vyber řádky se skladem = 1, pak sečti jejich ceny.",
+    "theory": "CTE zpřehledňuje dotaz pojmenováním jeho mezivýsledku.",
+    "tables": [{"name": "produkty", "columns": ["id NUMBER", "nazev VARCHAR2(30)", "cena NUMBER", "skladem NUMBER"], "rows": [[1, "Čaj", 80, 1], [2, "Káva", 150, 0], [3, "Kakao", 120, 1]]}],
+    "keywords": ["200", "80", "120"]
+  },
+  {
+    "id": 36, "level": "pokrocile", "topic": "datum", "type": "write-query",
+    "instruction": "Zahrň celý měsíc při filtrování data.",
+    "prompt": "Vrať id akcí z února 2026 včetně libovolného času posledního dne. Použij polootevřený interval.",
+    "sql": null, "solution": "SELECT id FROM akce WHERE konani >= DATE '2026-02-01' AND konani < DATE '2026-03-01';",
+    "hint": "Horní mez nastav na první den následujícího měsíce a použij <.",
+    "theory": "Oracle DATE může obsahovat čas; interval >= začátek a < další období zahrne celý poslední den.",
+    "tables": [{"name": "akce", "columns": ["id NUMBER", "konani DATE"], "rows": [[1, "2026-02-28 23:30:00"], [2, "2026-03-01 00:00:00"]]}],
+    "keywords": []
+  },
+  {
+    "id": 37, "level": "pokrocile", "topic": "datove-typy", "type": "write-query",
+    "instruction": "Převeď datum s explicitní maskou.",
+    "prompt": "Převeď text '31.12.2026' na DATE. Uveď masku DD.MM.YYYY.",
+    "sql": null, "solution": "SELECT TO_DATE('31.12.2026', 'DD.MM.YYYY') FROM dual;",
+    "hint": "Druhý argument TO_DATE je formát vstupního textu.",
+    "theory": "Explicitní převod předchází závislosti na implicitním formátu data relace.",
+    "tables": [], "keywords": []
+  },
+  {
+    "id": 38, "level": "pokrocile", "topic": "mnozinove-operace", "type": "explain-result",
+    "instruction": "Vysvětli rozdíl množin.",
+    "prompt": "Které hodnoty id zůstanou po operaci MINUS? Každou uveď jednou.",
+    "sql": "SELECT id FROM a MINUS SELECT id FROM b;",
+    "solution": "Zůstane pouze 1. MINUS odstraní hodnoty přítomné i v druhém výsledku.",
+    "hint": "Z první množiny odeber všechny hodnoty z druhé.",
+    "theory": "MINUS vrací rozdíl množin bez duplicit; pořadí větví je důležité.",
+    "tables": [{"name": "a", "columns": ["id NUMBER"], "rows": [[1], [2], [2]]}, {"name": "b", "columns": ["id NUMBER"], "rows": [[2], [3]]}],
+    "keywords": ["1"]
+  },
+  {
+    "id": 39, "level": "pokrocile", "topic": "retezce", "type": "write-query",
+    "instruction": "Převeď znakovou sadu.",
+    "prompt": "Vrať řetězec 'SQL' převedený funkcí CONVERT do znakové sady AL32UTF8.",
+    "sql": null, "solution": "SELECT CONVERT('SQL', 'AL32UTF8') FROM dual;",
+    "hint": "Druhým argumentem CONVERT je cílová znaková sada.",
+    "theory": "CONVERT převádí text mezi znakovými sadami; při vynechání zdrojové se použije znaková sada databáze.",
+    "tables": [], "keywords": []
+  },
+  {
+    "id": 40, "level": "pokrocile", "topic": "retezce", "type": "explain-result",
+    "instruction": "Vysvětli převod znakového řetězce.",
+    "prompt": "Jaký text vrátí TRANSLATE pro uvedené mapování?",
+    "sql": "SELECT TRANSLATE('Data', 'at', '12') FROM dual;",
+    "solution": "D121. Funkce nahradí a→1 a t→2, ostatní znaky ponechá.",
+    "hint": "Páruj znaky druhého a třetího argumentu zleva.",
+    "theory": "TRANSLATE nahrazuje jednotlivé znaky, nejde o náhradu celého podřetězce.",
+    "tables": [], "keywords": ["D121"]
+  },
+  {
+    "id": 41, "level": "pokrocile", "topic": "listagg", "type": "write-query",
+    "instruction": "Spoj názvy do seznamu.",
+    "prompt": "Vrať názvy produktů v jednom řetězci oddělené čárkou a seřazené abecedně.",
+    "sql": null, "solution": "SELECT LISTAGG(nazev, ', ') WITHIN GROUP (ORDER BY nazev) AS seznam FROM produkty;",
+    "hint": "LISTAGG potřebuje oddělovač a řazení uvnitř WITHIN GROUP.",
+    "theory": "LISTAGG agreguje hodnoty více řádků do jednoho řetězce.",
+    "tables": [{"name": "produkty", "columns": ["id NUMBER", "nazev VARCHAR2(30)"], "rows": [[1, "Čaj"], [2, "Káva"], [3, "Kakao"]]}],
+    "keywords": []
+  },
+  {
+    "id": 42, "level": "pokrocile", "topic": "listagg", "type": "explain-result",
+    "instruction": "Urči pořadí v LISTAGG.",
+    "prompt": "Jaký řetězec vrátí dotaz pro názvy Eva, Iva a Petr?",
+    "sql": "SELECT LISTAGG(jmeno, '|') WITHIN GROUP (ORDER BY jmeno) FROM lide;",
+    "solution": "Eva|Iva|Petr. WITHIN GROUP určuje abecední pořadí spojených hodnot.",
+    "hint": "Seřaď jména vzestupně a spoj je znakem svislé čáry.",
+    "theory": "Pořadí prvků výsledného řetězce určuje ORDER BY ve WITHIN GROUP.",
+    "tables": [{"name": "lide", "columns": ["id NUMBER", "jmeno VARCHAR2(30)"], "rows": [[1, "Petr"], [2, "Eva"], [3, "Iva"]]}],
+    "keywords": ["Eva|Iva|Petr"]
+  },
+  {
+    "id": 43, "level": "pokrocile", "topic": "partitioning", "type": "write-query",
+    "instruction": "Omez dotaz na konkrétní oddíl.",
+    "prompt": "Předpokládej tabulku faktury rozdělenou na oddíl p2026. Vrať z tohoto oddílu id a castka.",
+    "sql": null, "solution": "SELECT id, castka FROM faktury PARTITION (p2026);",
+    "hint": "Oracle umožňuje uvést oddíl tabulky v klauzuli PARTITION.",
+    "theory": "Partitioning rozděluje jednu tabulku na oddíly; dotaz lze omezit na určený oddíl.",
+    "tables": [], "keywords": []
+  },
+  {
+    "id": 44, "level": "pokrocile", "topic": "partitioning", "type": "explain-result",
+    "instruction": "Rozliš oddíl tabulky a analytické dělení.",
+    "prompt": "Vysvětli rozdíl mezi tabulkovým partitioningem a PARTITION BY v analytické funkci.",
+    "sql": "SELECT oddeleni, SUM(mzda) OVER (PARTITION BY oddeleni) FROM zamestnanci;",
+    "solution": "PARTITION BY zde rozděluje řádky pro výpočet analytické funkce; nevytváří fyzické oddíly tabulky.",
+    "hint": "Rozhoduje kontext: klauzule OVER je součást analytické funkce.",
+    "theory": "Stejný pojem partition označuje fyzické oddíly tabulky i logické skupiny analytického výpočtu.",
+    "tables": [{"name": "zamestnanci", "columns": ["id NUMBER", "oddeleni VARCHAR2(20)", "mzda NUMBER"], "rows": [[1, "Data", 45000], [2, "Data", 50000], [3, "Prodej", 40000]]}],
+    "keywords": ["analytické funkce", "fyzické oddíly"]
+  },
+  {
+    "id": 45, "level": "pokrocile", "topic": "datovy-slovnik", "type": "write-query",
+    "instruction": "Najdi tabulku v datovém slovníku.",
+    "prompt": "Vrať názvy tabulek vlastníka TRAINING z pohledu ALL_TABLES.",
+    "sql": null, "solution": "SELECT table_name FROM ALL_TABLES WHERE owner = 'TRAINING' ORDER BY table_name;",
+    "hint": "Pohled ALL_TABLES obsahuje vlastníka ve sloupci OWNER.",
+    "theory": "Datový slovník poskytuje metadata o objektech dostupných v databázi.",
+    "tables": [], "keywords": []
+  },
+  {
+    "id": 46, "level": "pokrocile", "topic": "datovy-slovnik", "type": "explain-result",
+    "instruction": "Čti metadata sloupců.",
+    "prompt": "K čemu slouží pohled ALL_TAB_COLUMNS a jak výsledek omezíš na tabulku PRODUKTY?",
+    "sql": "SELECT column_name, data_type FROM ALL_TAB_COLUMNS WHERE owner = 'TRAINING' AND table_name = 'PRODUKTY';",
+    "solution": "Vrací metadata sloupců dostupných tabulek; filtr OWNER a TABLE_NAME vybere sloupce PRODUKTY.",
+    "hint": "Pohled obsahuje název sloupce i jeho datový typ.",
+    "theory": "Názvy objektů v datovém slovníku Oracle jsou obvykle uloženy velkými písmeny.",
+    "tables": [], "keywords": ["metadata", "sloupců", "PRODUKTY"]
+  },
+  {
+    "id": 47, "level": "pokrocile", "topic": "pivot-unpivot", "type": "write-query",
+    "instruction": "Převeď sloupce období na řádky.",
+    "prompt": "Pomocí UNPIVOT převeď sloupce leden a unor na dvojice obdobi a castka.",
+    "sql": null, "solution": "SELECT produkt, obdobi, castka FROM prodeje UNPIVOT (castka FOR obdobi IN (leden AS 'LEDEN', unor AS 'UNOR'));",
+    "hint": "UNPIVOT pojmenuje výstupní sloupec hodnoty i sloupec původního názvu.",
+    "theory": "UNPIVOT převádí vybrané sloupce do řádků.",
+    "tables": [{"name": "prodeje", "columns": ["produkt VARCHAR2(20)", "leden NUMBER", "unor NUMBER"], "rows": [["Čaj", 100, 120], ["Káva", 200, 180]]}],
+    "keywords": []
+  },
+  {
+    "id": 48, "level": "pokrocile", "topic": "pivot-unpivot", "type": "explain-result",
+    "instruction": "Vysvětli výstup PIVOT.",
+    "prompt": "Které dvě hodnoty vzniknou pro produkt Čaj ve sloupcích leden a unor?",
+    "sql": "SELECT * FROM prodeje PIVOT (SUM(castka) FOR obdobi IN ('LEDEN' AS leden, 'UNOR' AS unor));",
+    "solution": "leden = 100 a unor = 120. PIVOT vytvoří sloupce z hodnot LEDEN a UNOR.",
+    "hint": "Najdi řádky produktu Čaj pro obě období.",
+    "theory": "Agregace v PIVOT shrnuje hodnoty pro každou kombinaci ostatních sloupců.",
+    "tables": [{"name": "prodeje", "columns": ["produkt VARCHAR2(20)", "obdobi VARCHAR2(10)", "castka NUMBER"], "rows": [["Čaj", "LEDEN", 100], ["Čaj", "UNOR", 120]]}],
+    "keywords": ["100", "120", "PIVOT"]
+  },
+  {
+    "id": 49, "level": "pokrocile", "topic": "pokrocile-agregace", "type": "write-query",
+    "instruction": "Vytvoř mezisoučty pomocí ROLLUP.",
+    "prompt": "Sečti prodeje podle oddeleni a produktu a přidej mezisoučet oddělení i celkový součet.",
+    "sql": null, "solution": "SELECT oddeleni, produkt, SUM(castka) FROM prodeje GROUP BY ROLLUP (oddeleni, produkt);",
+    "hint": "ROLLUP v tomto pořadí vytvoří podrobné řádky, mezisoučet a celkový součet.",
+    "theory": "ROLLUP vytváří hierarchické souhrny podle pořadí seskupovacích sloupců.",
+    "tables": [{"name": "prodeje", "columns": ["oddeleni VARCHAR2(20)", "produkt VARCHAR2(20)", "castka NUMBER"], "rows": [["Data", "Čaj", 100], ["Data", "Káva", 150], ["Prodej", "Čaj", 80]]}],
+    "keywords": []
+  },
+  {
+    "id": 50, "level": "pokrocile", "topic": "pokrocile-agregace", "type": "explain-result",
+    "instruction": "Rozpoznej úplný souhrn pomocí GROUPING_ID.",
+    "prompt": "Jakou hodnotu GROUPING_ID(oddeleni, kanal) má řádek celkového součtu z CUBE?",
+    "sql": "SELECT oddeleni, kanal, SUM(castka), GROUPING_ID(oddeleni, kanal) FROM prodeje GROUP BY CUBE (oddeleni, kanal);",
+    "solution": "3. V řádku celkového součtu jsou oba sloupce seskupeny do souhrnu.",
+    "hint": "GROUPING_ID vrací bitovou masku souhrnných sloupců.",
+    "theory": "GROUPING_ID rozlišuje úrovně souhrnů vytvořené pomocí ROLLUP nebo CUBE.",
+    "tables": [{"name": "prodeje", "columns": ["oddeleni VARCHAR2(20)", "kanal VARCHAR2(20)", "castka NUMBER"], "rows": [["Data", "Web", 100], ["Prodej", "Pobočka", 80]]}],
+    "keywords": ["3", "souhrnu"]
+  },
+  {
+    "id": 51, "level": "pokrocile", "topic": "pokrocile-agregace", "type": "write-query",
+    "instruction": "Sestav vícerozměrné souhrny.",
+    "prompt": "Vrať součty pro všechny kombinace oddeleni a kanal pomocí CUBE.",
+    "sql": null, "solution": "SELECT oddeleni, kanal, SUM(castka) FROM prodeje GROUP BY CUBE (oddeleni, kanal);",
+    "hint": "CUBE vytvoří souhrny pro každou kombinaci seskupovacích sloupců.",
+    "theory": "CUBE vytváří úplnou sadu vícerozměrných souhrnných skupin.",
+    "tables": [{"name": "prodeje", "columns": ["oddeleni VARCHAR2(20)", "kanal VARCHAR2(20)", "castka NUMBER"], "rows": [["Data", "Web", 100], ["Data", "Pobočka", 80], ["Prodej", "Web", 60]]}],
+    "keywords": []
+  },
+  {
+    "id": 52, "level": "pokrocile", "topic": "regularni-vyrazy", "type": "write-query",
+    "instruction": "Vyfiltruj kódy regulárním výrazem.",
+    "prompt": "Vrať z tabulky zaznamy pouze kódy ve tvaru dvou velkých písmen, pomlčky a tří číslic.",
+    "sql": null, "solution": "SELECT kod FROM zaznamy WHERE REGEXP_LIKE(kod, '^[A-Z]{2}-[0-9]{3}$');",
+    "hint": "^ a $ označují začátek a konec celého řetězce.",
+    "theory": "REGEXP_LIKE testuje, zda text odpovídá regulárnímu výrazu.",
+    "tables": [{"name": "zaznamy", "columns": ["kod VARCHAR2(20)"], "rows": [["AB-123"], ["A-123"], ["CD-45"]]}],
+    "keywords": []
+  },
+  {
+    "id": 53, "level": "pokrocile", "topic": "regularni-vyrazy", "type": "write-query",
+    "instruction": "Odstraň nečíselné znaky.",
+    "prompt": "Pomocí REGEXP_REPLACE odstraň z textu '12-34 56' vše kromě číslic.",
+    "sql": null, "solution": "SELECT REGEXP_REPLACE('12-34 56', '[^0-9]', '') FROM dual;",
+    "hint": "Znaková třída [^0-9] vybere každý znak, který není číslice.",
+    "theory": "REGEXP_REPLACE nahrazuje části textu odpovídající regulárnímu výrazu.",
+    "tables": [], "keywords": []
+  },
+  {
+    "id": 54, "level": "pokrocile", "topic": "regularni-vyrazy", "type": "explain-result",
+    "instruction": "Vyber výskyt regulárním výrazem.",
+    "prompt": "Jaký podřetězec vrátí dotaz?",
+    "sql": "SELECT REGEXP_SUBSTR('objednavka-2026', '[0-9]+') FROM dual;",
+    "solution": "2026. REGEXP_SUBSTR vrátí podřetězec odpovídající jedné či více číslicím.",
+    "hint": "Znak + opakuje předchozí výraz alespoň jednou.",
+    "theory": "REGEXP_SUBSTR vrací část textu odpovídající regulárnímu výrazu.",
+    "tables": [], "keywords": ["2026"]
+  },
+  {
+    "id": 55, "level": "pokrocile", "topic": "hierarchicke-dotazy", "type": "write-query",
+    "instruction": "Projdi strom zaměstnanců.",
+    "prompt": "Vypiš zaměstnance od kořene s id 1 směrem k podřízeným. Použij START WITH a CONNECT BY.",
+    "sql": null, "solution": "SELECT id, jmeno, LEVEL FROM zamestnanci START WITH id = 1 CONNECT BY PRIOR id = vedouci_id;",
+    "hint": "PRIOR označuje hodnotu rodičovského řádku.",
+    "theory": "START WITH určí kořen a CONNECT BY určí vztah rodiče a potomka.",
+    "tables": [{"name": "zamestnanci", "columns": ["id NUMBER", "jmeno VARCHAR2(30)", "vedouci_id NUMBER"], "rows": [[1, "Eva", null], [2, "Petr", 1], [3, "Iva", 1], [4, "Marek", 2]]}],
+    "keywords": []
+  },
+  {
+    "id": 56, "level": "pokrocile", "topic": "hierarchicke-dotazy", "type": "explain-result",
+    "instruction": "Urči úrovně v hierarchii.",
+    "prompt": "Jaké hodnoty LEVEL mají kořen id 1 a jeho přímý potomek id 2?",
+    "sql": "SELECT id, LEVEL FROM zamestnanci START WITH id = 1 CONNECT BY PRIOR id = vedouci_id;",
+    "solution": "Kořen id 1 má LEVEL 1 a přímý potomek id 2 má LEVEL 2.",
+    "hint": "Oracle označuje kořen hierarchie hodnotou LEVEL 1.",
+    "theory": "LEVEL udává hloubku řádku v hierarchickém dotazu.",
+    "tables": [{"name": "zamestnanci", "columns": ["id NUMBER", "jmeno VARCHAR2(30)", "vedouci_id NUMBER"], "rows": [[1, "Eva", null], [2, "Petr", 1], [3, "Iva", 1]]}],
+    "keywords": ["1", "2"]
+  },
+  {
+    "id": 57, "level": "pokrocile", "topic": "hierarchicke-dotazy", "type": "write-query",
+    "instruction": "Vypiš cestu ve stromu.",
+    "prompt": "Vypiš jméno každého zaměstnance a cestu od kořene oddělenou lomítkem.",
+    "sql": null, "solution": "SELECT jmeno, SYS_CONNECT_BY_PATH(jmeno, '/') AS cesta FROM zamestnanci START WITH id = 1 CONNECT BY PRIOR id = vedouci_id;",
+    "hint": "SYS_CONNECT_BY_PATH přijímá sloupec a oddělovač.",
+    "theory": "SYS_CONNECT_BY_PATH sestaví řetězec hodnot od kořene hierarchie.",
+    "tables": [{"name": "zamestnanci", "columns": ["id NUMBER", "jmeno VARCHAR2(30)", "vedouci_id NUMBER"], "rows": [[1, "Eva", null], [2, "Petr", 1], [3, "Iva", 1]]}],
+    "keywords": []
+  },
+  {
+    "id": 58, "level": "pokrocile", "topic": "analyticke-funkce", "type": "write-query",
+    "instruction": "Očísluj zaměstnance podle mzdy.",
+    "prompt": "Vrať id, oddeleni a mzdu a očísluj zaměstnance od nejvyšší mzdy v každém oddělení pomocí ROW_NUMBER.",
+    "sql": null, "solution": "SELECT id, oddeleni, mzda, ROW_NUMBER() OVER (PARTITION BY oddeleni ORDER BY mzda DESC, id) AS poradi FROM zamestnanci;",
+    "hint": "PARTITION BY oddeli skupiny a ORDER BY určí pořadí uvnitř nich.",
+    "theory": "Analytická funkce počítá hodnotu pro řádky bez jejich sloučení do skupin.",
+    "tables": [{"name": "zamestnanci", "columns": ["id NUMBER", "oddeleni VARCHAR2(20)", "mzda NUMBER"], "rows": [[1, "Data", 45000], [2, "Data", 50000], [3, "Prodej", 40000]]}],
+    "keywords": []
+  },
+  {
+    "id": 59, "level": "pokrocile", "topic": "analyticke-funkce", "type": "write-query",
+    "instruction": "Porovnej hodnotu s předchozím řádkem.",
+    "prompt": "Vrať datum a castka každého prodeje a pomocí LAG zobraz částku předchozího prodeje podle data.",
+    "sql": null, "solution": "SELECT datum, castka, LAG(castka) OVER (ORDER BY datum) AS predchozi_castka FROM prodeje;",
+    "hint": "LAG čte hodnotu z předchozího řádku ve zvoleném pořadí.",
+    "theory": "LAG zpřístupní hodnotu předchozího řádku bez samo-spojení tabulky.",
+    "tables": [{"name": "prodeje", "columns": ["datum DATE", "castka NUMBER"], "rows": [["2026-01-01", 100], ["2026-01-02", 150], ["2026-01-03", 120]]}],
+    "keywords": []
+  },
+  {
+    "id": 60, "level": "pokrocile", "topic": "analyticke-funkce", "type": "explain-result",
+    "instruction": "Vysvětli průběžný součet.",
+    "prompt": "Jaké hodnoty vrátí analytický součet pro částky 10, 20 a 5 v pořadí podle id?",
+    "sql": "SELECT id, SUM(castka) OVER (ORDER BY id ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) FROM prodeje;",
+    "solution": "10, 30 a 35. Každý řádek přičítá svou částku k předchozím.",
+    "hint": "Okno začíná prvním řádkem a končí aktuálním řádkem.",
+    "theory": "Analytická SUM s explicitním rámcem ROWS počítá průběžný součet v určeném pořadí.",
+    "tables": [{"name": "prodeje", "columns": ["id NUMBER", "castka NUMBER"], "rows": [[1, 10], [2, 20], [3, 5]]}],
+    "keywords": ["10", "30", "35"]
+  }
+]
