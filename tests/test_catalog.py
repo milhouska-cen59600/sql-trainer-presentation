@@ -36,17 +36,41 @@ class CatalogTests(unittest.TestCase):
         source = json.loads((ROOT / "materials/tasks_source.json").read_text(encoding="utf-8"))
         outline = json.loads((ROOT / "materials/outline.json").read_text(encoding="utf-8"))
         self.assertEqual(self.catalog, source)
-        self.assertEqual([task["id"] for task in self.catalog], list(range(1, 61)))
-        self.assertEqual(len(self.catalog), 60)
+        self.assertEqual([task["id"] for task in self.catalog], list(range(1, 101)))
+        self.assertEqual(len(self.catalog), 100)
+        added = self.catalog[60:]
+        self.assertEqual([task["id"] for task in added], list(range(61, 101)))
+        self.assertEqual(
+            {level: sum(task["level"] == level for task in added)
+             for level in builder.LEVELS},
+            {"zaklady": 20, "pokrocile": 20},
+        )
+        self.assertEqual(
+            {type_: sum(task["type"] == type_ for task in added)
+             for type_ in builder.TYPES},
+            {"write-query": 23, "explain-result": 17},
+        )
         self.assertEqual(
             {level: sum(task["level"] == level for task in self.catalog)
              for level in builder.LEVELS},
-            {"zaklady": 38, "pokrocile": 22},
+            {"zaklady": 58, "pokrocile": 42},
         )
         self.assertEqual(
             {type_: sum(task["type"] == type_ for task in self.catalog)
              for type_ in builder.TYPES},
-            {"write-query": 37, "explain-result": 23},
+            {"write-query": 60, "explain-result": 40},
+        )
+        self.assertEqual(
+            {(level, type_): sum(
+                task["level"] == level and task["type"] == type_
+                for task in self.catalog
+            ) for level in builder.LEVELS for type_ in builder.TYPES},
+            {
+                ("zaklady", "write-query"): 36,
+                ("zaklady", "explain-result"): 22,
+                ("pokrocile", "write-query"): 24,
+                ("pokrocile", "explain-result"): 18,
+            },
         )
         self.assertIs(builder.validate_catalog(self.catalog, outline=outline), self.catalog)
         with self.assertRaises(ValueError):
@@ -65,12 +89,12 @@ class CatalogTests(unittest.TestCase):
         self.assertIs(builder.validate_outline(outline), outline)
         pairs = {(topic["level"], topic["slug"]) for topic in outline["topics"]}
         self.assertTrue({(task["level"], task["topic"]) for task in self.catalog} <= pairs)
-        for level, expected in (("zaklady", 38), ("pokrocile", 22)):
+        for level, expected in (("zaklady", 58), ("pokrocile", 42)):
             self.assertEqual(sum(
                 sum(topic["quotas"].values()) for topic in outline["topics"]
                 if topic["level"] == level
             ), expected)
-        for type_, expected in (("write-query", 37), ("explain-result", 23)):
+        for type_, expected in (("write-query", 60), ("explain-result", 40)):
             self.assertEqual(sum(topic["quotas"][type_] for topic in outline["topics"]), expected)
         for topic in outline["topics"]:
             self.assertEqual(topic["source"], {"zaklady": "basic", "pokrocile": "advanced"}[topic["level"]])
@@ -86,16 +110,16 @@ class CatalogTests(unittest.TestCase):
 
     def test_invalid_outlines_rejected(self):
         valid = {
-            "version": 1, "target_total": 60,
+            "version": 1, "target_total": 100,
             "topics": [
                 {"slug": "select", "label": "Výběr", "level": level,
-                 "quotas": {"write-query": 18, "explain-result": 12}}
+                 "quotas": {"write-query": 30, "explain-result": 20}}
                 for level in ("zaklady", "pokrocile")
             ],
         }
         builder.validate_outline(valid)
-        cases = [None, [], {}, {**valid, "target_total": 59},
-                 {**valid, "target_total": 61}, {**valid, "topics": []},
+        cases = [None, [], {}, {**valid, "target_total": 99},
+                 {**valid, "target_total": 101}, {**valid, "topics": []},
                  {**valid, "topics": valid["topics"] * 2},
                  {**valid, "topics": [valid["topics"][0]]}]
         for key, value in [
@@ -166,7 +190,7 @@ class CatalogTests(unittest.TestCase):
                 outline.write_bytes((ROOT / "materials/outline.json").read_bytes())
                 planned_command = command + ["--outline", str(outline)]
                 result = subprocess.run(planned_command, check=True, capture_output=True, text=True)
-                self.assertIn(f"{len(self.catalog)}/60", result.stdout)
+                self.assertIn(f"{len(self.catalog)}/100", result.stdout)
                 self.assertEqual(first, (ROOT / "docs/tasks.json").read_bytes())
                 expanded = copy.deepcopy(self.catalog)
                 expanded[0]["topic"] = "select"
