@@ -1,7 +1,7 @@
 # SQL trenažér z prezentace
 
 Jednoduchý český trenažér Oracle SQL bez frameworku, databáze a externích závislostí.
-Obsahuje 100 úloh odvozených z PDF v `materials/`: 58 základních a 42 pokročilých.
+Obsahuje 112 úloh odvozených z PDF v `materials/`: 64 základních a 48 pokročilých.
 Každá úloha obsahuje krátkou teorii, nápovědu a vzorové řešení; tam, kde jsou
 potřeba, také ukázková data.
 
@@ -45,7 +45,7 @@ Odpovědi se neukládají ani nikam neodesílají.
 - `materials/SQL_1_Data academy.pdf`: podkladová prezentace.
 - `materials/Advanced_SQL_2_Data academy.pdf`: pokročilá prezentace.
 - `materials/outline.json`: témata, odkazy na strany PDF a přesné kvóty.
-- `materials/tasks_source.json`: kanonický zdroj všech 100 úloh.
+- `materials/tasks_source.json`: kanonický zdroj všech 112 úloh.
 - `docs/catalog-plan.md`, `web/catalog-plan.md`: zrcadlený přehled pokrytí a předpokladů.
 
 ## Práce s obsahem
@@ -53,7 +53,7 @@ Odpovědi se neukládají ani nikam neodesílají.
 Úlohy jsou obsahové adaptace dvou PDF, nikoli automatický přepis; generátor PDF
 nečte ani neprovádí OCR. Upravuj `materials/tasks_source.json` a odpovídající
 kvóty či odkazy na strany v `materials/outline.json`. Generátor ověřuje cílový
-počet 100 i kvóty pro jednotlivá témata a typy.
+počet 112 i kvóty pro jednotlivá témata a typy.
 
 ```sh
 python scripts/build_tasks.py --outline materials/outline.json
@@ -95,7 +95,7 @@ se vzorovým řešením. Pokud jsou klíčová slova výhradně seznamem více c
 [Plán katalogu](docs/catalog-plan.md) shrnuje pokryté sekce obou PDF, distribuci
 úloh a nutné předpoklady. `materials/outline.json` je zdroj témat, stran a
 kvót; `materials/tasks_source.json` je kanonický zdroj zadání i řešení.
-Generátor vyžaduje přesně 100 úloh, zapisuje shodné kopie do `docs/` a `web/`
+Generátor vyžaduje přesně 112 úloh, zapisuje shodné kopie do `docs/` a `web/`
 a testy hlídají počet, kvóty, ID i paritu.
 
 ## Synchronizace a publikace
