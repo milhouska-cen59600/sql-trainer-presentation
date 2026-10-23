@@ -154,6 +154,33 @@ test("every sample solution passes its own check", () => {
   for (const task of tasks) assert.equal(check(task.solution, task), true, `Task ${task.id}`);
 });
 
+test("result-only explanations accept the requested result without extra commentary", () => {
+  const tasks = JSON.parse(fs.readFileSync(path.join(root, "web/tasks.json"), "utf8"));
+  const answers = new Map([
+    [20, "3, 2"], [27, "40"], [29, "2"], [35, "200"],
+    [48, "100, 120"], [50, "3"], [63, "1, 3"], [74, "1, 2, 3"],
+  ]);
+  for (const [id, answer] of answers) {
+    const task = tasks.find((item) => item.id === id);
+    assert.equal(check(answer, task), true, `Task ${id}: requested result`);
+    assert.equal(check("999", task), false, `Task ${id}: incorrect result`);
+  }
+});
+
+test("date and DECODE explanations agree with the requested output", () => {
+  const tasks = JSON.parse(fs.readFileSync(path.join(root, "web/tasks.json"), "utf8"));
+  const date = tasks.find((task) => task.id === 67);
+  assert.equal(check("2026-02-28", date), true);
+  assert.equal(check("2026-02-27", date), false);
+  const decode = tasks.find((task) => task.id === 77);
+  assert.equal(check("Pro A: aktivní; pro Z: ostatní.", decode), true);
+  assert.equal(check("aktivní", decode), false);
+  assert.equal(check("jiné", decode), false);
+  const lag = tasks.find((task) => task.id === 100);
+  assert.equal(check("NULL, 10, 20", lag), true);
+  assert.equal(check("10, 20", lag), false);
+});
+
 test("Partitioning renders the selected partition as sample-table context", async () => {
   const { get, trigger } = await createApp();
   get("level").value = "pokrocile";
