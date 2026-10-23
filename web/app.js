@@ -90,6 +90,12 @@ function startSelection() {
   else clearTask("Pro tento výběr zatím není úloha. Změň téma nebo typ a klikni na Spustit.");
 }
 
+function startRandomSelection() {
+  selection = tasks.filter((task) => task.level === element("level").value);
+  if (selection.length) renderTask(Math.floor(Math.random() * selection.length));
+  else clearTask("Pro zvolenou úroveň zatím není úloha. Změň úroveň a zkus to znovu.");
+}
+
 function updateTopics() {
   const selected = element("topic").value;
   const topics = [...new Set(tasks
@@ -131,6 +137,7 @@ function checkAnswer(answer, task) {
 }
 
 element("load").addEventListener("click", startSelection);
+element("random").addEventListener("click", startRandomSelection);
 element("next").addEventListener("click", () => {
   if (currentTask()) renderTask((currentIndex + 1) % selection.length);
 });
@@ -166,6 +173,7 @@ async function initialize() {
     tasks = catalog;
     updateTopics();
     element("load").disabled = false;
+    element("random").disabled = false;
     clearTask("Vyber úroveň, typ a případně téma. Potom klikni na Spustit.");
   } catch {
     clearTask("Katalog nelze načíst. Použij HTTP server podle README (ne file://), zkontroluj tasks.json a obnov stránku.");

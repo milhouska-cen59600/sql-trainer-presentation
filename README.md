@@ -22,6 +22,9 @@ repozitáře. JavaScript potřebuje moderní prohlížeč.
 Vyber úroveň **Základy** (`zaklady`) nebo **Pokročilé** (`pokrocile`), typ
 **Napiš dotaz**, **Vysvětli výsledek** a volitelně téma.
 Klikni na **Spustit**. **Další úloha** cyklicky prochází aktuální výběr.
+Tlačítko **Náhodná úloha ve zvolené úrovni** vybírá se stejnou pravděpodobností
+ze všech úloh dané úrovně bez ohledu na téma a typ, i bez vybraného tématu.
+Opětovným kliknutím losuješ znovu; **Další úloha** pak prochází celou zvolenou úroveň.
 Témata i úlohy odpovídají pouze zvolené úrovni a jejímu zdrojovému PDF.
 Interní ID úloh se v nadpisech nezobrazují.
 Změna filtru vymaže rozepsanou odpověď a vyžaduje nové spuštění.
