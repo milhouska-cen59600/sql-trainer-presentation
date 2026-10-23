@@ -3539,5 +3539,423 @@
       "10",
       "20"
     ]
+  },
+  {
+    "id": 101,
+    "level": "zaklady",
+    "topic": "retezce",
+    "type": "write-query",
+    "instruction": "Nahraď část textu.",
+    "prompt": "Vypiš jména z tabulky osoby a pomocí REPLACE nahraď každé malé a písmenem o.",
+    "sql": null,
+    "solution": "SELECT REPLACE(jmeno, 'a', 'o') FROM osoby;",
+    "hint": "REPLACE přijímá původní text, hledaný text a náhradu.",
+    "theory": "REPLACE nahrazuje výskyty zadaného podřetězce.",
+    "tables": [
+      {
+        "name": "osoby",
+        "columns": [
+          "jmeno VARCHAR2(20)"
+        ],
+        "rows": [
+          [
+            "Eva"
+          ],
+          [
+            "Karel"
+          ],
+          [
+            "Anna"
+          ]
+        ]
+      }
+    ],
+    "keywords": []
+  },
+  {
+    "id": 102,
+    "level": "zaklady",
+    "topic": "cisla",
+    "type": "explain-result",
+    "instruction": "Vysvětli zaokrouhlení nahoru.",
+    "prompt": "Jaké číslo vrátí CEIL pro hodnotu 12,34?",
+    "sql": "SELECT CEIL(12.34) FROM dual;",
+    "solution": "13. CEIL vrátí nejmenší celé číslo, které není menší než zadaná hodnota.",
+    "hint": "CEIL vrací celé číslo na horní straně vstupní hodnoty.",
+    "theory": "CEIL zaokrouhluje směrem nahoru k nejbližšímu celému číslu.",
+    "tables": [],
+    "keywords": [
+      "13"
+    ]
+  },
+  {
+    "id": 103,
+    "level": "zaklady",
+    "topic": "datum",
+    "type": "write-query",
+    "instruction": "Zjisti počet dní mezi daty.",
+    "prompt": "Vypiš počet dní mezi zacatek a konec z tabulky obdobi odečtením dat.",
+    "sql": null,
+    "solution": "SELECT konec - zacatek AS pocet_dni FROM obdobi;",
+    "hint": "Rozdíl dvou hodnot DATE vyjadřuje počet dní.",
+    "theory": "Od hodnoty DATE lze odečíst jinou hodnotu DATE.",
+    "tables": [
+      {
+        "name": "obdobi",
+        "columns": [
+          "zacatek DATE",
+          "konec DATE"
+        ],
+        "rows": [
+          [
+            "2026-03-01",
+            "2026-03-10"
+          ],
+          [
+            "2026-04-12",
+            "2026-04-15"
+          ]
+        ]
+      }
+    ],
+    "keywords": []
+  },
+  {
+    "id": 104,
+    "level": "zaklady",
+    "topic": "operatory",
+    "type": "explain-result",
+    "instruction": "Vyhodnoť porovnávací podmínku.",
+    "prompt": "Které názvy vrátí podmínka cena > 100?",
+    "sql": "SELECT nazev FROM produkty WHERE cena > 100;",
+    "solution": "Káva a Kakao. Operátor > vybírá pouze ceny vyšší než 100.",
+    "hint": "Operátor > nezahrnuje hodnotu rovnou hranici.",
+    "theory": "Porovnávací operátory ve WHERE vybírají řádky podle hodnoty.",
+    "tables": [
+      {
+        "name": "produkty",
+        "columns": [
+          "nazev VARCHAR2(20)",
+          "cena NUMBER"
+        ],
+        "rows": [
+          [
+            "Čaj",
+            80
+          ],
+          [
+            "Káva",
+            150
+          ],
+          [
+            "Kakao",
+            120
+          ]
+        ]
+      }
+    ],
+    "keywords": [
+      "Káva",
+      "Kakao"
+    ]
+  },
+  {
+    "id": 105,
+    "level": "zaklady",
+    "topic": "podminky",
+    "type": "write-query",
+    "instruction": "Rozděl body do kategorií.",
+    "prompt": "Vypiš jméno každého studenta a kategorii: alespoň 90 bodů je výborný, alespoň 60 prospěl, jinak neprospěl. Použij CASE.",
+    "sql": null,
+    "solution": "SELECT jmeno, CASE WHEN body >= 90 THEN 'výborný' WHEN body >= 60 THEN 'prospěl' ELSE 'neprospěl' END AS kategorie FROM studenti;",
+    "hint": "U prohledávaného CASE zapiš jednotlivé podmínky WHEN v pořadí.",
+    "theory": "CASE vrací výsledek první splněné podmínky WHEN.",
+    "tables": [
+      {
+        "name": "studenti",
+        "columns": [
+          "jmeno VARCHAR2(20)",
+          "body NUMBER"
+        ],
+        "rows": [
+          [
+            "Eva",
+            95
+          ],
+          [
+            "Petr",
+            75
+          ],
+          [
+            "Iva",
+            40
+          ]
+        ]
+      }
+    ],
+    "keywords": []
+  },
+  {
+    "id": 106,
+    "level": "zaklady",
+    "topic": "null",
+    "type": "explain-result",
+    "instruction": "Vyfiltruj chybějící hodnotu.",
+    "prompt": "Které id vrátí dotaz, pokud bonus u některého řádku chybí?",
+    "sql": "SELECT id FROM odmeny WHERE bonus IS NULL;",
+    "solution": "Vrátí id 2, protože pouze tento řádek má bonus NULL.",
+    "hint": "Pro test chybějící hodnoty použij IS NULL.",
+    "theory": "NULL se testuje pomocí IS NULL, nikoli porovnáním operátorem =.",
+    "tables": [
+      {
+        "name": "odmeny",
+        "columns": [
+          "id NUMBER",
+          "bonus NUMBER"
+        ],
+        "rows": [
+          [
+            1,
+            100
+          ],
+          [
+            2,
+            null
+          ],
+          [
+            3,
+            50
+          ]
+        ]
+      }
+    ],
+    "keywords": [
+      "2"
+    ]
+  },
+  {
+    "id": 107,
+    "level": "pokrocile",
+    "topic": "listagg",
+    "type": "write-query",
+    "instruction": "Seřaď LISTAGG podle českého řazení.",
+    "prompt": "Spoj jména do jednoho řetězce a ve WITHIN GROUP použij NLSSORT s českým řazením.",
+    "sql": null,
+    "solution": "SELECT LISTAGG(jmeno, ', ') WITHIN GROUP (ORDER BY NLSSORT(jmeno, 'NLS_SORT=CZECH')) AS seznam FROM osoby;",
+    "hint": "NLSSORT vytvoří řadicí klíč pro jazykové pořadí.",
+    "theory": "NLSSORT lze použít ve WITHIN GROUP k určení jazykového pořadí hodnot LISTAGG.",
+    "tables": [
+      {
+        "name": "osoby",
+        "columns": [
+          "jmeno VARCHAR2(30)"
+        ],
+        "rows": [
+          [
+            "Žaneta"
+          ],
+          [
+            "Zdeněk"
+          ],
+          [
+            "Zora"
+          ]
+        ]
+      }
+    ],
+    "keywords": []
+  },
+  {
+    "id": 108,
+    "level": "pokrocile",
+    "topic": "datovy-slovnik",
+    "type": "write-query",
+    "instruction": "Zjisti oddíly tabulky v datovém slovníku.",
+    "prompt": "Z pohledu ALL_TAB_PARTITIONS vypiš názvy oddílů tabulky PARTIES ve schématu DWH_OWNER v pořadí oddílů.",
+    "sql": null,
+    "solution": "SELECT PARTITION_NAME FROM ALL_TAB_PARTITIONS WHERE TABLE_OWNER = 'DWH_OWNER' AND TABLE_NAME = 'PARTIES' ORDER BY PARTITION_POSITION;",
+    "hint": "Pohled obsahuje vlastníka, název tabulky, název oddílu i jeho pořadí.",
+    "theory": "Pohled ALL_TAB_PARTITIONS zpřístupňuje metadata oddílů tabulek.",
+    "tables": [
+      {
+        "name": "ALL_TAB_PARTITIONS",
+        "columns": [
+          "TABLE_OWNER VARCHAR2(30)",
+          "TABLE_NAME VARCHAR2(30)",
+          "PARTITION_NAME VARCHAR2(30)",
+          "PARTITION_POSITION NUMBER"
+        ],
+        "rows": [
+          [
+            "DWH_OWNER",
+            "PARTIES",
+            "P2025",
+            1
+          ],
+          [
+            "DWH_OWNER",
+            "PARTIES",
+            "P2026",
+            2
+          ]
+        ]
+      }
+    ],
+    "keywords": []
+  },
+  {
+    "id": 109,
+    "level": "pokrocile",
+    "topic": "partitioning",
+    "type": "explain-result",
+    "instruction": "Vysvětli vynechání nepotřebných oddílů.",
+    "prompt": "Tabulka faktury je rozdělena podle data na roční oddíly. Které oddíly musí dotaz pro rok 2026 číst?",
+    "sql": "SELECT id FROM faktury WHERE datum >= DATE '2026-01-01' AND datum < DATE '2027-01-01';",
+    "solution": "Pouze oddíl odpovídající roku 2026. Podmínka na datum umožní partition pruning a vynechání ostatních oddílů.",
+    "hint": "Podmínka odpovídá klíči, podle kterého jsou řádky rozděleny.",
+    "theory": "Partition pruning omezuje čtení na oddíly, které mohou splnit podmínku.",
+    "tables": [
+      {
+        "name": "faktury (oddíly podle roku data)",
+        "columns": [
+          "id NUMBER",
+          "datum DATE"
+        ],
+        "rows": [
+          [
+            1,
+            "2025-12-31"
+          ],
+          [
+            2,
+            "2026-06-15"
+          ],
+          [
+            3,
+            "2027-01-01"
+          ]
+        ]
+      }
+    ],
+    "keywords": [
+      "2026",
+      "pruning"
+    ]
+  },
+  {
+    "id": 110,
+    "level": "pokrocile",
+    "topic": "analyticke-funkce",
+    "type": "write-query",
+    "instruction": "Pořadí se shodnými hodnotami.",
+    "prompt": "Vypiš jména a mzdy zaměstnanců a pořadí podle mzdy od nejvyšší pomocí analytické funkce RANK.",
+    "sql": null,
+    "solution": "SELECT jmeno, mzda, RANK() OVER (ORDER BY mzda DESC) AS poradi FROM zamestnanci;",
+    "hint": "RANK patří do OVER a její pořadí určuje ORDER BY.",
+    "theory": "RANK přiřadí shodným hodnotám stejné pořadí a následující pořadí přeskočí.",
+    "tables": [
+      {
+        "name": "zamestnanci",
+        "columns": [
+          "jmeno VARCHAR2(20)",
+          "mzda NUMBER"
+        ],
+        "rows": [
+          [
+            "Eva",
+            50000
+          ],
+          [
+            "Iva",
+            50000
+          ],
+          [
+            "Petr",
+            40000
+          ]
+        ]
+      }
+    ],
+    "keywords": []
+  },
+  {
+    "id": 111,
+    "level": "pokrocile",
+    "topic": "analyticke-funkce",
+    "type": "explain-result",
+    "instruction": "Vysvětli funkci LEAD.",
+    "prompt": "Jaké následující částky vrátí LEAD(castka) v pořadí podle id pro částky 10, 20 a 5?",
+    "sql": "SELECT id, LEAD(castka) OVER (ORDER BY id) FROM platby;",
+    "solution": "Následující částky jsou 20 a 5; poslední řádek nemá následující hodnotu, proto je výsledek NULL.",
+    "hint": "LEAD zpřístupní hodnotu následujícího řádku v určeném pořadí.",
+    "theory": "LEAD čte hodnotu z následujícího řádku analytického okna.",
+    "tables": [
+      {
+        "name": "platby",
+        "columns": [
+          "id NUMBER",
+          "castka NUMBER"
+        ],
+        "rows": [
+          [
+            1,
+            10
+          ],
+          [
+            2,
+            20
+          ],
+          [
+            3,
+            5
+          ]
+        ]
+      }
+    ],
+    "keywords": [
+      "20",
+      "5",
+      "NULL"
+    ]
+  },
+  {
+    "id": 112,
+    "level": "pokrocile",
+    "topic": "analyticke-funkce",
+    "type": "explain-result",
+    "instruction": "Rozpoznej klouzavý rámec analytického součtu.",
+    "prompt": "Jaké součty vrátí dotaz pro částky 10, 20 a 5 v pořadí podle id?",
+    "sql": "SELECT id, SUM(castka) OVER (ORDER BY id ROWS BETWEEN 1 PRECEDING AND CURRENT ROW) FROM platby;",
+    "solution": "10, 30 a 25. Každý řádek sčítá svou částku a nejvýše jeden předchozí řádek.",
+    "hint": "Rámec ROWS BETWEEN 1 PRECEDING AND CURRENT ROW zahrnuje aktuální a předchozí řádek.",
+    "theory": "Specifikace rámce omezuje řádky zahrnuté v analytickém výpočtu.",
+    "tables": [
+      {
+        "name": "platby",
+        "columns": [
+          "id NUMBER",
+          "castka NUMBER"
+        ],
+        "rows": [
+          [
+            1,
+            10
+          ],
+          [
+            2,
+            20
+          ],
+          [
+            3,
+            5
+          ]
+        ]
+      }
+    ],
+    "keywords": [
+      "10",
+      "30",
+      "25"
+    ]
   }
 ]
