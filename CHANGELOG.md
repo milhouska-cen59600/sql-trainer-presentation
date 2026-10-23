@@ -3,7 +3,14 @@
 ## Nevydáno
 
 Souhrn změn již sloučených do `main`, připravený jako podklad pro vydání.
-Tento release pass nemění obsah úloh ani chování aplikace.
+Release pass nemění obsah úloh ani chování aplikace; chování mění jen sekce Opravy.
+
+### Opravy
+
+- Tlačítko **Náhodná úloha ve zvolené úrovni** zůstávalo po nasazení neaktivní:
+  nový `index.html` se spojil se starým `app.js` z cache prohlížeče, který
+  tlačítko neznal. `app.js` a `styles.css` se nyní načítají s hashem obsahu
+  v URL a tlačítko je aktivní, kdykoli zvolená úroveň obsahuje úlohy.
 
 ### Doplnění podle gap analýzy
 

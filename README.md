@@ -24,6 +24,7 @@ Vyber úroveň **Základy** (`zaklady`) nebo **Pokročilé** (`pokrocile`), typ
 Klikni na **Spustit**. **Další úloha** cyklicky prochází aktuální výběr.
 Tlačítko **Náhodná úloha ve zvolené úrovni** vybírá se stejnou pravděpodobností
 ze všech úloh dané úrovně bez ohledu na téma a typ, i bez vybraného tématu.
+Tlačítko je aktivní, kdykoli zvolená úroveň obsahuje alespoň jednu úlohu.
 Opětovným kliknutím losuješ znovu; **Další úloha** pak prochází celou zvolenou úroveň.
 Témata i úlohy odpovídají pouze zvolené úrovni a jejímu zdrojovému PDF.
 Interní ID úloh se v nadpisech nezobrazují.
@@ -42,6 +43,9 @@ Odpovědi se neukládají ani nikam neodesílají.
 - `web/index.html`, `web/app.js`, `web/styles.css`: zdrojové UI.
 - `web/tasks.json`: generovaný katalog.
 - `docs/`: totožné čtyři soubory pro publikaci.
+- `index.html` načítá `app.js` a `styles.css` s parametrem `?v=` (prvních 8 znaků
+  SHA-256 obsahu souboru), aby prohlížeč po nasazení nepoužil starou verzi z cache.
+  Při změně těchto souborů hash aktualizuj; hlídá to `tests/test_catalog.py`.
 - `scripts/build_tasks.py`: validátor a deterministický generátor katalogu.
 - `tests/test_catalog.py`: schéma, unikátní ID, pokrytí, generování a parita.
 - `tests/test_app.js`: kontrola odpovědí pomocí vestavěného Node test runneru.
