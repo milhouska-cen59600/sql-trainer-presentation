@@ -77,6 +77,21 @@ class CatalogTests(unittest.TestCase):
         dictionary_rows = tasks[87]["tables"][0]["rows"]
         self.assertIn(["DWH_OWNER", "PARTIES", "PT_KEY"], dictionary_rows)
 
+    def test_only_literal_dual_exercises_omit_sample_tables(self):
+        literal_tasks = {
+            7, 8, 9, 10, 13, 14, 15, 23, 37, 39, 40, 53, 54,
+            64, 65, 66, 67, 71, 72, 82,
+        }
+        self.assertEqual(
+            {task["id"] for task in self.catalog if not task["tables"]},
+            literal_tasks,
+        )
+        for task in self.catalog:
+            if task["id"] in literal_tasks:
+                with self.subTest(task=task["id"]):
+                    query = task["sql"] or task["solution"]
+                    self.assertRegex(query, r"(?i)\bFROM\s+dual\s*;\s*$")
+
     def test_exact_catalog_distribution_and_source(self):
         source = json.loads((ROOT / "materials/tasks_source.json").read_text(encoding="utf-8"))
         outline = json.loads((ROOT / "materials/outline.json").read_text(encoding="utf-8"))
