@@ -13,7 +13,7 @@ const context = vm.createContext({
 vm.runInContext(fs.readFileSync(path.join(root, "web/app.js"), "utf8"), context);
 const check = (answer, task) => context.checkAnswer(answer, task);
 
-async function createApp() {
+async function createApp(random = Math.random) {
   const node = () => ({
     value: "", textContent: "", children: [], listeners: {},
     addEventListener(name, listener) { this.listeners[name] = listener; },
@@ -44,6 +44,7 @@ async function createApp() {
   const app = vm.createContext({
     document: { getElementById: get, createElement: node },
     fetch: async () => ({ ok: true, json: async () => catalog }),
+    Math: Object.assign(Object.create(Math), { random }),
   });
   vm.runInContext(fs.readFileSync(path.join(root, "web/app.js"), "utf8"), app);
   await new Promise(setImmediate);
@@ -147,6 +148,76 @@ test("changing filters clears stale tasks and answers; empty selections never fa
   get("topic").value = "";
   trigger("load");
   assert.equal(current().level, "pokrocile");
+});
+
+test("random selection samples every task in the selected level regardless of topic or type", async () => {
+  let random = 0;
+  const { get, trigger, current, catalog } = await createApp(() => random);
+  assert.equal(get("random").disabled, false);
+  for (const level of ["zaklady", "pokrocile"]) {
+    get("level").value = level;
+    trigger("level", "change");
+    const expected = catalog.filter((task) => task.level === level);
+    for (const topic of ["", "select"]) {
+      get("topic").value = topic;
+      trigger("topic", "change");
+      for (const [index, task] of expected.entries()) {
+        random = (index + 0.5) / expected.length;
+        trigger("random");
+        assert.equal(current().id, task.id);
+        assert.equal(get("prompt").textContent, task.prompt);
+        assert.equal(get("position").textContent, `Úloha ${index + 1} z ${expected.length}`);
+        assert.equal(get("answer").disabled, false);
+        get("answer").value = task.solution;
+        trigger("answer-form", "submit");
+        assert.match(get("feedback").textContent, /^Odpověď odpovídá/);
+      }
+    }
+    for (const [value, index] of [[0, 0], [1 - Number.EPSILON, expected.length - 1]]) {
+      random = value;
+      trigger("random");
+      assert.equal(current().id, expected[index].id);
+      trigger("next");
+      assert.equal(current().id, expected[(index + 1) % expected.length].id);
+    }
+  }
+});
+
+test("random selection clears stale state for an empty level and exact-topic browsing still works", async () => {
+  const { get, trigger, current, catalog } = await createApp(() => 0.5);
+  trigger("random");
+  get("answer").value = "unfinished answer";
+  trigger("hint-button");
+  trigger("solution-button");
+  get("level").value = "empty-level";
+  trigger("random");
+  assert.equal(current(), undefined);
+  assert.match(get("prompt").textContent, /Pro zvolenou úroveň zatím není úloha/);
+  assert.equal(get("answer").value, "");
+  assert.equal(get("tables").children.length, 0);
+  assert.equal(get("hint-section").hidden, true);
+  assert.equal(get("solution-section").hidden, true);
+  for (const id of ["answer", "check", "hint-button", "solution-button", "next"]) {
+    assert.equal(get(id).disabled, true);
+  }
+  trigger("next");
+  trigger("hint-button");
+  trigger("solution-button");
+  assert.equal(current(), undefined);
+
+  get("level").value = "zaklady";
+  trigger("level", "change");
+  get("topic").value = "select";
+  trigger("topic", "change");
+  trigger("random");
+  trigger("load");
+  const expected = catalog.filter((task) => task.level === "zaklady" &&
+    task.type === "write-query" && task.topic === "select");
+  for (const task of expected) {
+    assert.equal(current().id, task.id);
+    trigger("next");
+  }
+  assert.equal(current().id, expected[0].id);
 });
 
 test("every sample solution passes its own check", () => {
