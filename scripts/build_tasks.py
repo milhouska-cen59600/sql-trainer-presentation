@@ -26,8 +26,8 @@ def validate_outline(outline):
     if not isinstance(outline, dict) or outline.get("version") != 1:
         raise ValueError("Outline must have version 1")
     target = outline.get("target_total")
-    if type(target) is not int or target != 60:
-        raise ValueError("Outline target_total must be 60")
+    if type(target) is not int or target != 100:
+        raise ValueError("Outline target_total must be 100")
     topics = outline.get("topics")
     if not isinstance(topics, list) or not topics:
         raise ValueError("Outline topics must be a non-empty list")
