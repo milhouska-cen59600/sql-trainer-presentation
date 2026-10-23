@@ -2,8 +2,15 @@
 
 const element = (id) => document.getElementById(id);
 const topicLabels = {
-  operatory: "Operátory", datum: "Datum", retezce: "Řetězce",
-  "datove-typy": "Datové typy", cisla: "Čísla", "mnozinove-operace": "Množinové operace",
+  select: "Výběr a řazení", operatory: "Operátory", datum: "Datum",
+  retezce: "Řetězce", "datove-typy": "Datové typy", cisla: "Čísla",
+  "mnozinove-operace": "Množinové operace", agregace: "Agregace",
+  podminky: "Podmíněné výrazy", poddotazy: "Poddotazy", null: "NULL a NVL",
+  joiny: "Spojování tabulek", cte: "WITH a CTE", listagg: "LISTAGG",
+  partitioning: "Partitioning", "datovy-slovnik": "Datový slovník",
+  "pivot-unpivot": "PIVOT a UNPIVOT", "pokrocile-agregace": "Pokročilé agregace",
+  "regularni-vyrazy": "Regulární výrazy", "hierarchicke-dotazy": "Hierarchické dotazy",
+  "analyticke-funkce": "Analytické funkce",
 };
 let tasks = [];
 let selection = [];
