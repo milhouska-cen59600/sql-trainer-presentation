@@ -112,6 +112,7 @@ function updateTopics() {
     element("topic").append(option);
   }
   element("topic").value = topics.includes(selected) ? selected : "";
+  element("random").disabled = !topics.length;
 }
 
 function normalizeSql(text) {
@@ -173,7 +174,6 @@ async function initialize() {
     tasks = catalog;
     updateTopics();
     element("load").disabled = false;
-    element("random").disabled = false;
     clearTask("Vyber úroveň, typ a případně téma. Potom klikni na Spustit.");
   } catch {
     clearTask("Katalog nelze načíst. Použij HTTP server podle README (ne file://), zkontroluj tasks.json a obnov stránku.");

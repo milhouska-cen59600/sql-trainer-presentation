@@ -183,6 +183,30 @@ test("random selection samples every task in the selected level regardless of to
   }
 });
 
+test("random button is enabled exactly when the selected level has candidate tasks", async () => {
+  let random = 0;
+  const { get, trigger, current, catalog } = await createApp(() => random);
+  for (const level of ["zaklady", "pokrocile", "empty-level", "zaklady"]) {
+    get("level").value = level;
+    trigger("level", "change");
+    const expected = catalog.filter((task) => task.level === level);
+    assert.equal(get("random").disabled, expected.length === 0, level);
+    if (!expected.length) continue;
+    get("task-type").value = "explain-result";
+    get("topic").value = expected[0].topic;
+    trigger("topic", "change");
+    assert.equal(get("random").disabled, false);
+    const types = new Set();
+    for (const index of expected.keys()) {
+      random = index / expected.length;
+      trigger("random");
+      assert.equal(current().level, level);
+      types.add(current().type);
+    }
+    assert.deepEqual([...types].sort(), ["explain-result", "write-query"]);
+  }
+});
+
 test("random selection clears stale state for an empty level and exact-topic browsing still works", async () => {
   const { get, trigger, current, catalog } = await createApp(() => 0.5);
   trigger("random");

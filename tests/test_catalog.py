@@ -1,4 +1,5 @@
 import copy
+import hashlib
 import importlib.util
 import json
 from pathlib import Path
@@ -25,6 +26,15 @@ class CatalogTests(unittest.TestCase):
         for name in ("index.html", "app.js", "styles.css", "tasks.json"):
             with self.subTest(asset=name):
                 self.assertEqual((ROOT / "web" / name).read_bytes(), (ROOT / "docs" / name).read_bytes())
+
+    def test_assets_are_cache_busted_by_content_hash(self):
+        # A stale cached app.js must never run against a newer index.html.
+        for directory in ("web", "docs"):
+            html = (ROOT / directory / "index.html").read_text(encoding="utf-8")
+            for name in ("app.js", "styles.css"):
+                with self.subTest(directory=directory, asset=name):
+                    digest = hashlib.sha256((ROOT / directory / name).read_bytes()).hexdigest()[:8]
+                    self.assertIn(f'"./{name}?v={digest}"', html)
 
     def test_application_branding(self):
         for directory in ("web", "docs"):
