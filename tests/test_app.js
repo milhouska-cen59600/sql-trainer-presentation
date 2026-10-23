@@ -93,6 +93,19 @@ test("start and next stay within each level, type and topic, without internal ID
           assert.match(get("task-heading").textContent, /^Úloha · \S/);
           assert.doesNotMatch(get("task-heading").textContent, /#\d+/);
           assert.equal(get("instruction").textContent, task.instruction);
+          assert.equal(get("tables").children.length, task.tables.length);
+          for (const [index, data] of task.tables.entries()) {
+            const wrapper = get("tables").children[index];
+            assert.equal(wrapper.className, "table-scroll");
+            const table = wrapper.children[0];
+            assert.equal(table.caption.textContent, `${data.name} · ukázková data`);
+            assert.deepEqual(Array.from(table.tHead.rows[0].children, (cell) => cell.textContent),
+              data.columns);
+            assert.ok(Array.from(table.tHead.rows[0].children).every((cell) => cell.scope === "col"));
+            assert.deepEqual(Array.from(table.tBody.rows, (row) =>
+              Array.from(row.cells, (cell) => cell.textContent)),
+            data.rows.map((row) => row.map((value) => value === null ? "NULL" : String(value))));
+          }
           get("answer").value = task.solution;
           trigger("answer-form", "submit");
           assert.match(get("feedback").textContent, /^Odpověď odpovídá/);
@@ -114,6 +127,7 @@ test("changing filters clears stale tasks and answers; empty selections never fa
   trigger("level", "change");
   assert.equal(current(), undefined);
   assert.equal(get("answer").value, "");
+  assert.equal(get("tables").children.length, 0);
   assert.equal(get("hint-section").hidden, true);
   assert.equal(get("solution-section").hidden, true);
   assert.equal(get("task-heading").textContent, "Zadání");
