@@ -50,6 +50,19 @@ Odpovědi se neukládají ani nikam neodesílají.
 
 ## Práce s obsahem
 
+Stručný postup pro přispěvatele:
+
+1. Uprav zadání v `materials/tasks_source.json`, nikoli v generovaných kopiích.
+   Zachovej ID existujících úloh; nové ID musí být unikátní kladné celé číslo.
+2. Zkontroluj soulad zadání, ukázkových tabulek, řešení, nápovědy a klíčových slov
+   podle schématu níže. Výstupní aliasy a požadované řazení uveď přímo v zadání.
+3. Při změně pokrytí uprav také `materials/outline.json` a obě kopie
+   `catalog-plan.md`. Přidání úlohy vyžaduje sladění celkového počtu, kvót
+   i odpovídajících kontrol v generátoru a testech; samotné přidání do JSON nestačí.
+4. Spusť generátor a oba testovací příkazy níže. Změněnou úlohu ověř i
+   v prohlížeči: zadání, tabulky, nápovědu, kontrolu odpovědi a vzorové řešení.
+5. V diffu zkontroluj zamýšlené změny a commituj zdroj i obě generované kopie.
+
 Úlohy jsou obsahové adaptace dvou PDF, nikoli automatický přepis; generátor PDF
 nečte ani neprovádí OCR. Upravuj `materials/tasks_source.json` a odpovídající
 kvóty či odkazy na strany v `materials/outline.json`. Generátor ověřuje cílový
@@ -63,6 +76,8 @@ node --test tests/test_app.js
 
 Python generátor a testy používají pouze standardní knihovnu. Node.js 18+ je
 potřeba pro JS testy, nikoli pro provoz aplikace.
+Testy ověřují katalog a kontrolu odpovědí, neprovádějí však úplnou validaci
+Oracle SQL; vybrané přenositelné příklady se kontrolují pomocí SQLite.
 
 Katalog je neprázdné JSON pole objektů. Povinné klíče:
 
@@ -101,7 +116,10 @@ a testy hlídají počet, kvóty, ID i paritu.
 ## Synchronizace a publikace
 
 `web/` a `docs/` záměrně obsahují **bajtově totožné soubory** včetně plánu katalogu.
-Generátor synchronizuje pouze `tasks.json`. Po úpravě HTML/JS/CSS spusť:
+Tok katalogu je `materials/tasks_source.json` + `materials/outline.json`
+→ `scripts/build_tasks.py` → `web/tasks.json` + `docs/tasks.json`.
+Generátor synchronizuje pouze `tasks.json`; UI ani plán katalogu negeneruje.
+Po úpravě HTML/JS/CSS spusť:
 
 ```sh
 cp web/index.html web/app.js web/styles.css docs/
@@ -109,10 +127,20 @@ python -m unittest discover -s tests -v
 ```
 
 Test parity hlídá čtyři aplikační soubory a kopie plánu. Commituj zdroj i generované kopie.
+Plán upravuj v `web/catalog-plan.md` a zkopíruj jej do `docs/catalog-plan.md`.
+Před odesláním PR spusť všechny tři příkazy z části **Práce s obsahem**.
+Pro ověření, že regenerování nezměnilo commitované katalogy, použij
+`git diff --exit-code -- web/tasks.json docs/tasks.json` po jejich zařazení do commitu.
 V GitHub **Settings → Pages → Deploy from a branch** vyber větev `main`
 a složku `/docs`, potom ulož. Po sloučení změn je aplikace dostupná na
 <https://milhouska-cen59600.github.io/sql-trainer-presentation/>.
 Není nutný bundler ani build workflow.
+
+## Změny a příprava vydání
+
+Souhrn sloučených obsahových a kvalitativních změn je v [CHANGELOG.md](CHANGELOG.md).
+Repozitář zatím nemá soubor s verzí aplikace; `version` v
+`materials/outline.json` označuje verzi schématu, nikoli vydání aplikace.
 
 ## Rozdíl oproti sql-trainer-cli
 
