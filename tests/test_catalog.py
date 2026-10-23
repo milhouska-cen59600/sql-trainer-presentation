@@ -2,6 +2,9 @@ import copy
 import importlib.util
 import json
 from pathlib import Path
+from datetime import date
+import re
+import sqlite3
 import subprocess
 import sys
 import tempfile
@@ -160,6 +163,59 @@ class CatalogTests(unittest.TestCase):
             self.assertEqual({task["type"] for task in tasks}, builder.TYPES)
         self.assertEqual({task["topic"] for task in self.catalog}, builder.TOPICS)
         self.assertTrue(all(task["theory"].strip() for task in self.catalog))
+
+    def test_output_aliases_are_named_in_prompts(self):
+        for task in self.catalog:
+            if task["type"] != "write-query":
+                continue
+            for alias in re.findall(r"\bAS\s+(\w+)", task["solution"], re.IGNORECASE):
+                with self.subTest(task=task["id"], alias=alias):
+                    self.assertRegex(task["prompt"], rf"\b{re.escape(alias)}\b")
+
+    def test_corrected_sample_results(self):
+        # Only portable SQL is executed here, not Oracle-specific syntax.
+        expected = {
+            19: [("Data", 47500)],
+            24: [("Káva",), ("Kakao",)],
+            27: [(40,)],
+            34: [("Káva",), ("Kakao",)],
+            35: [(200,)],
+            45: [("OBJEDNAVKY",), ("PRODUKTY",), ("ZAMESTNANCI",)],
+            58: [(1, "Data", 45000, 3), (2, "Data", 50000, 1),
+                 (3, "Prodej", 40000, 1), (4, "Data", 50000, 2)],
+            63: [(1,), (3,)],
+            68: [("Čaj",), ("Kakao",)],
+            74: [(1,), (2,), (3,)],
+            76: [(3, 2)],
+            100: [(1, None), (2, 10), (3, 20)],
+        }
+        for task in self.catalog:
+            if task["id"] not in expected:
+                continue
+            with self.subTest(task=task["id"]), sqlite3.connect(":memory:") as db:
+                for table in task["tables"]:
+                    columns = [column.split()[0] for column in table["columns"]]
+                    db.execute(f"CREATE TABLE {table['name']} ({', '.join(columns)})")
+                    placeholders = ", ".join("?" for _ in columns)
+                    db.executemany(f"INSERT INTO {table['name']} VALUES ({placeholders})", table["rows"])
+                query = task["sql"] or task["solution"]
+                self.assertCountEqual(db.execute(query).fetchall(), expected[task["id"]])
+        # DATE subtraction is Oracle-specific; check the displayed ISO dates directly.
+        task = next(task for task in self.catalog if task["id"] == 103)
+        self.assertEqual(
+            [((date.fromisoformat(end) - date.fromisoformat(start)).days,)
+             for start, end in task["tables"][0]["rows"]],
+            [(9,), (3,)],
+        )
+
+    def test_regex_and_ranking_samples_exercise_boundaries(self):
+        tasks = {task["id"]: task for task in self.catalog}
+        regex_task = tasks[52]
+        self.assertIn("'^[A-Z]{2}-[0-9]{3}$', 'c'", regex_task["solution"])
+        self.assertIn(["ab-123"], regex_task["tables"][0]["rows"])
+        salaries = [row[2] for row in tasks[58]["tables"][0]["rows"] if row[1] == "Data"]
+        self.assertLess(len(set(salaries)), len(salaries))
+        self.assertIn("id", tasks[58]["prompt"])
 
     def test_outline_source(self):
         outline = json.loads((ROOT / "materials/outline.json").read_text(encoding="utf-8"))
