@@ -19,8 +19,19 @@ async function createApp() {
     addEventListener(name, listener) { this.listeners[name] = listener; },
     append(...children) { this.children.push(...children); },
     replaceChildren(...children) { this.children = children; },
-    createCaption: node, createTHead: node, createTBody: node,
-    insertRow: node, insertCell: node,
+    createCaption() { return this.caption = node(); },
+    createTHead() { return this.tHead = node(); },
+    createTBody() { return this.tBody = node(); },
+    insertRow() {
+      const row = node();
+      (this.rows ||= []).push(row);
+      return row;
+    },
+    insertCell() {
+      const cell = node();
+      (this.cells ||= []).push(cell);
+      return cell;
+    },
   });
   const elements = new Map();
   const get = (id) => {
@@ -127,6 +138,24 @@ test("changing filters clears stale tasks and answers; empty selections never fa
 test("every sample solution passes its own check", () => {
   const tasks = JSON.parse(fs.readFileSync(path.join(root, "web/tasks.json"), "utf8"));
   for (const task of tasks) assert.equal(check(task.solution, task), true, `Task ${task.id}`);
+});
+
+test("Partitioning renders the selected partition as sample-table context", async () => {
+  const { get, trigger } = await createApp();
+  get("level").value = "pokrocile";
+  trigger("level", "change");
+  get("topic").value = "partitioning";
+  trigger("topic", "change");
+  trigger("load");
+
+  const table = get("tables").children[0].children[0];
+  assert.equal(table.caption.textContent, "faktury (oddíl p2026) · ukázková data");
+  assert.deepEqual(Array.from(table.tHead.rows[0].children, (cell) => cell.textContent),
+    ["id NUMBER", "castka NUMBER(10,2)"]);
+  assert.deepEqual(Array.from(table.tHead.rows[0].children, (cell) => cell.scope), ["col", "col"]);
+  assert.deepEqual(Array.from(table.tBody.rows, (row) =>
+    Array.from(row.cells, (cell) => cell.textContent)),
+  [["1", "1250"], ["2", "850.5"], ["3", "3100"]]);
 });
 
 test("SQL comparison ignores whitespace and keyword case but preserves literals", () => {

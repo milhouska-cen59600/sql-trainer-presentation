@@ -431,7 +431,7 @@
     "sql": null, "solution": "SELECT id, castka FROM faktury PARTITION (p2026);",
     "hint": "Oracle umožňuje uvést oddíl tabulky v klauzuli PARTITION.",
     "theory": "Partitioning rozděluje jednu tabulku na oddíly; dotaz lze omezit na určený oddíl.",
-    "tables": [], "keywords": []
+    "tables": [{"name": "faktury (oddíl p2026)", "columns": ["id NUMBER", "castka NUMBER(10,2)"], "rows": [[1, 1250.00], [2, 850.50], [3, 3100.00]]}], "keywords": []
   },
   {
     "id": 44, "level": "pokrocile", "topic": "partitioning", "type": "explain-result",
@@ -451,7 +451,7 @@
     "sql": null, "solution": "SELECT table_name FROM ALL_TABLES WHERE owner = 'TRAINING' ORDER BY table_name;",
     "hint": "Pohled ALL_TABLES obsahuje vlastníka ve sloupci OWNER.",
     "theory": "Datový slovník poskytuje metadata o objektech dostupných v databázi.",
-    "tables": [], "keywords": []
+    "tables": [{"name": "ALL_TABLES", "columns": ["OWNER VARCHAR2(30)", "TABLE_NAME VARCHAR2(30)"], "rows": [["TRAINING", "OBJEDNAVKY"], ["TRAINING", "PRODUKTY"], ["TRAINING", "ZAMESTNANCI"], ["DWH_OWNER", "PARTIES"]]}], "keywords": []
   },
   {
     "id": 46, "level": "pokrocile", "topic": "datovy-slovnik", "type": "explain-result",
@@ -461,7 +461,7 @@
     "solution": "Vrací metadata sloupců dostupných tabulek; filtr OWNER a TABLE_NAME vybere sloupce PRODUKTY.",
     "hint": "Pohled obsahuje název sloupce i jeho datový typ.",
     "theory": "Názvy objektů v datovém slovníku Oracle jsou obvykle uloženy velkými písmeny.",
-    "tables": [], "keywords": ["metadata", "sloupců", "PRODUKTY"]
+    "tables": [{"name": "ALL_TAB_COLUMNS", "columns": ["OWNER VARCHAR2(30)", "TABLE_NAME VARCHAR2(30)", "COLUMN_NAME VARCHAR2(30)", "DATA_TYPE VARCHAR2(30)"], "rows": [["TRAINING", "PRODUKTY", "ID", "NUMBER"], ["TRAINING", "PRODUKTY", "NAZEV", "VARCHAR2"], ["TRAINING", "PRODUKTY", "CENA", "NUMBER"]]}], "keywords": ["metadata", "sloupců", "PRODUKTY"]
   },
   {
     "id": 47, "level": "pokrocile", "topic": "pivot-unpivot", "type": "write-query",
@@ -853,7 +853,7 @@
     "sql": null, "solution": "SELECT * FROM dwh_owner.parties PARTITION (partition_11);",
     "hint": "PARTITION vybírá konkrétní fyzický oddíl.",
     "theory": "Partitioning fyzicky dělí rozsáhlou tabulku na oddíly.",
-    "tables": [],
+    "tables": [{"name": "dwh_owner.parties (oddíl partition_11)", "columns": ["pt_key NUMBER", "party_name VARCHAR2(40)"], "rows": [[101, "Alpha"], [102, "Beta"], [103, "Gamma"]]}],
     "keywords": []
   },
   {
@@ -863,7 +863,7 @@
     "sql": "SELECT ROW_NUMBER() OVER (PARTITION BY oddeleni ORDER BY mzda) FROM zamestnanci;", "solution": "PARTITION v názvu tabulky vybírá fyzický oddíl; analytické PARTITION BY určuje skupinu řádků pro výpočet.",
     "hint": "PARTITION vybírá konkrétní fyzický oddíl.",
     "theory": "Partitioning fyzicky dělí rozsáhlou tabulku na oddíly.",
-    "tables": [],
+    "tables": [{"name": "dwh_owner.parties (oddíl partition_11)", "columns": ["pt_key NUMBER", "party_name VARCHAR2(40)"], "rows": [[101, "Alpha"], [102, "Beta"], [103, "Gamma"]]}, {"name": "zamestnanci", "columns": ["id NUMBER", "oddeleni VARCHAR2(20)", "mzda NUMBER"], "rows": [[1, "Data", 45000], [2, "Data", 50000], [3, "Prodej", 40000]]}],
     "keywords": ["fyzický","skupinu"]
   },
   {
@@ -873,7 +873,7 @@
     "sql": null, "solution": "SELECT table_name FROM all_tab_columns WHERE owner = 'DWH_OWNER' AND column_name = 'PT_KEY';",
     "hint": "Použij odpovídající pohled datového slovníku.",
     "theory": "Datový slovník zpřístupňuje metadata databázových objektů.",
-    "tables": [],
+    "tables": [{"name": "ALL_TAB_COLUMNS", "columns": ["OWNER VARCHAR2(30)", "TABLE_NAME VARCHAR2(30)", "COLUMN_NAME VARCHAR2(30)"], "rows": [["DWH_OWNER", "PARTIES", "PT_KEY"], ["DWH_OWNER", "CONTACTS", "PT_KEY"], ["DWH_OWNER", "PARTIES", "PARTY_NAME"], ["TRAINING", "PRODUKTY", "PT_KEY"]]}],
     "keywords": []
   },
   {
@@ -883,7 +883,7 @@
     "sql": "SELECT table_name, column_name FROM all_tab_columns WHERE owner = 'DWH_OWNER';", "solution": "Pohled ALL_TAB_COLUMNS popisuje sloupce tabulek, například jejich názvy a příslušné tabulky.",
     "hint": "Použij odpovídající pohled datového slovníku.",
     "theory": "Datový slovník zpřístupňuje metadata databázových objektů.",
-    "tables": [],
+    "tables": [{"name": "ALL_TAB_COLUMNS", "columns": ["OWNER VARCHAR2(30)", "TABLE_NAME VARCHAR2(30)", "COLUMN_NAME VARCHAR2(30)", "DATA_TYPE VARCHAR2(30)"], "rows": [["DWH_OWNER", "PARTIES", "PT_KEY", "NUMBER"], ["DWH_OWNER", "PARTIES", "PARTY_NAME", "VARCHAR2"], ["DWH_OWNER", "CONTACTS", "EMAIL", "VARCHAR2"]]}],
     "keywords": ["sloupce","tabulek"]
   },
   {
@@ -943,7 +943,7 @@
     "sql": "SELECT oddeleni, role, COUNT(*) FROM zamestnanci GROUP BY CUBE (oddeleni, role);", "solution": "CUBE vrátí detail podle oddělení a role, souhrn podle oddělení, souhrn podle role i celkový souhrn.",
     "hint": "Rozšířená seskupení doplňují detail o souhrnné řádky.",
     "theory": "ROLLUP, CUBE a GROUPING SETS rozšiřují seskupování o souhrny.",
-    "tables": [],
+    "tables": [{"name": "zamestnanci", "columns": ["oddeleni VARCHAR2(20)", "role VARCHAR2(20)"], "rows": [["Data", "Analytik"], ["Data", "Architekt"], ["Prodej", "Analytik"], ["Prodej", "Obchodnik"]]}],
     "keywords": ["oddělení","role","souhrn"]
   },
   {
@@ -963,7 +963,7 @@
     "sql": "SELECT hodnota FROM data WHERE REGEXP_LIKE(hodnota, '^[[:digit:]]+$');", "solution": "Třída [:digit:] odpovídá číslicím; znaky ^ a $ ohraničují celý řetězec.",
     "hint": "Vzor určuje, které řetězce či znaky se zpracují.",
     "theory": "Regulární výrazy vyhledávají, porovnávají nebo upravují text.",
-    "tables": [],
+    "tables": [{"name": "data", "columns": ["hodnota VARCHAR2(20)"], "rows": [["123"], ["456"], ["12a"], ["7890"]]}],
     "keywords": ["číslicím","celý"]
   },
   {

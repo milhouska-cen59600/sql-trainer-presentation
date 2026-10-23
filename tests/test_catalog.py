@@ -32,6 +32,51 @@ class CatalogTests(unittest.TestCase):
             self.assertIn(task["level"], builder.LEVELS)
             self.assertIn(task["type"], builder.TYPES)
 
+    def test_relational_examples_match_task_schemas(self):
+        examples = {
+            43: [("faktury (oddíl p2026)", ["id NUMBER", "castka NUMBER(10,2)"])],
+            45: [("ALL_TABLES", ["OWNER VARCHAR2(30)", "TABLE_NAME VARCHAR2(30)"])],
+            46: [("ALL_TAB_COLUMNS", [
+                "OWNER VARCHAR2(30)", "TABLE_NAME VARCHAR2(30)",
+                "COLUMN_NAME VARCHAR2(30)", "DATA_TYPE VARCHAR2(30)",
+            ])],
+            85: [("dwh_owner.parties (oddíl partition_11)", [
+                "pt_key NUMBER", "party_name VARCHAR2(40)",
+            ])],
+            86: [
+                ("dwh_owner.parties (oddíl partition_11)", [
+                    "pt_key NUMBER", "party_name VARCHAR2(40)",
+                ]),
+                ("zamestnanci", ["id NUMBER", "oddeleni VARCHAR2(20)", "mzda NUMBER"]),
+            ],
+            87: [("ALL_TAB_COLUMNS", [
+                "OWNER VARCHAR2(30)", "TABLE_NAME VARCHAR2(30)", "COLUMN_NAME VARCHAR2(30)",
+            ])],
+            88: [("ALL_TAB_COLUMNS", [
+                "OWNER VARCHAR2(30)", "TABLE_NAME VARCHAR2(30)",
+                "COLUMN_NAME VARCHAR2(30)", "DATA_TYPE VARCHAR2(30)",
+            ])],
+            94: [("zamestnanci", ["oddeleni VARCHAR2(20)", "role VARCHAR2(20)"])],
+            96: [("data", ["hodnota VARCHAR2(20)"])],
+        }
+        tasks = {task["id"]: task for task in self.catalog}
+        for id_, schemas in examples.items():
+            with self.subTest(task=id_):
+                tables = tasks[id_]["tables"]
+                self.assertEqual(len(tables), len(schemas))
+                for table, (name, columns) in zip(tables, schemas):
+                    self.assertEqual(table["name"], name)
+                    self.assertEqual(table["columns"], columns)
+                    self.assertGreaterEqual(len(table["rows"]), 3)
+                    self.assertLessEqual(len(table["rows"]), 5)
+                    self.assertTrue(all(len(row) == len(columns) for row in table["rows"]))
+        for id_, partition in ((43, "p2026"), (85, "partition_11"), (86, "partition_11")):
+            table = tasks[id_]["tables"][0]
+            self.assertIn(partition, table["name"])
+            self.assertFalse(any("partition" in column.lower() for column in table["columns"]))
+        dictionary_rows = tasks[87]["tables"][0]["rows"]
+        self.assertIn(["DWH_OWNER", "PARTIES", "PT_KEY"], dictionary_rows)
+
     def test_exact_catalog_distribution_and_source(self):
         source = json.loads((ROOT / "materials/tasks_source.json").read_text(encoding="utf-8"))
         outline = json.loads((ROOT / "materials/outline.json").read_text(encoding="utf-8"))
