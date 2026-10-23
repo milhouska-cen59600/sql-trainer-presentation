@@ -41,6 +41,9 @@ Odpovědi se neukládají ani nikam neodesílají.
 - `tests/test_catalog.py`: schéma, unikátní ID, pokrytí, generování a parita.
 - `tests/test_app.js`: kontrola odpovědí pomocí vestavěného Node test runneru.
 - `materials/SQL_1_Data academy.pdf`: podkladová prezentace.
+- `materials/Advanced_SQL_2_Data academy.pdf`: pokročilá prezentace.
+- `materials/outline.json`: plánovaná témata a kvóty, nikoli hotové úlohy.
+- `docs/catalog-plan.md`, `web/catalog-plan.md`: zrcadlený plán rozšíření.
 - `materials/tasks_source.json`: volitelný vlastní zdroj katalogu.
 
 ## Práce s obsahem
@@ -96,9 +99,41 @@ tokeny, ne podřetězce (`2` neodpovídá `12`). Používej desetinný oddělova
 se vzorovým řešením. Pokud jsou klíčová slova výhradně seznamem více celých čísel,
 čárka v odpovědi odděluje položky seznamu (`1,2,3`), nikoli desetinná místa.
 
+## Rozšíření katalogu z PDF
+
+Konkrétní mapu obou prezentací, kanonická témata a milníky pro **100 úloh**
+obsahuje [plán katalogu](docs/catalog-plan.md). Osnova je ruční textový výtah
+s odkazy na stránky PDF, ne automatický přepis ani OCR.
+
+1. Udržuj témata a kvóty v `materials/outline.json` (verze 1). Dvojice
+   `level`/`slug` je unikátní; `quotas` obsahuje počty `write-query` a
+   `explain-result`. Součet musí odpovídat `target_total` v rozmezí 80–120.
+   Popisky jsou české; slugy jsou stabilní identifikátory pro `topic` úlohy.
+2. Jednorázově zkopíruj `web/tasks.json` do `materials/tasks_source.json`,
+   pokud vlastní zdroj ještě nemáš. Postupně do něj doplňuj **ručně ověřené**
+   úlohy podle osnovy. PDF ani kvóty samy nevytvářejí zadání a řešení.
+3. Z kořene repozitáře spusť:
+
+   ```sh
+   python scripts/build_tasks.py --outline materials/outline.json
+   python -m unittest discover -s tests -v
+   node --test tests/test_app.js
+   ```
+
+   `--outline` ověří plán, povolí jeho témata a vypíše aktuální/cílové počty
+   po úrovních, tématech a typech. Kvóty jsou cíl, ne podmínka publikace;
+   neúplný katalog lze generovat průběžně. Bez `--outline` platí původních
+   šest témat. Bez zdroje úloh se stále použije původní starter.
+4. Generátor zapíše shodné `tasks.json` do `docs/` i `web/`. Po změně plánu
+   spusť `cp docs/catalog-plan.md web/catalog-plan.md`; při přidání tématu
+   doplň český popisek do `topicLabels` v `web/app.js` a synchronizuj UI
+   podle následující sekce. Commituj osnovu, zdroj i obě výstupní kopie.
+
+Typ `find-bug` / **Oprav chybu** je již odstraněný a do plánu se nevrací.
+
 ## Synchronizace a publikace
 
-`web/` a `docs/` záměrně obsahují **bajtově totožné soubory**.
+`web/` a `docs/` záměrně obsahují **bajtově totožné soubory** včetně plánu katalogu.
 Generátor synchronizuje pouze `tasks.json`. Po úpravě HTML/JS/CSS spusť:
 
 ```sh
@@ -106,7 +141,7 @@ cp web/index.html web/app.js web/styles.css docs/
 python -m unittest discover -s tests -v
 ```
 
-Test parity hlídá všechny čtyři soubory. Commituj zdroj i generované kopie.
+Test parity hlídá čtyři aplikační soubory a kopie plánu. Commituj zdroj i generované kopie.
 V GitHub **Settings → Pages → Deploy from a branch** vyber větev `main`
 a složku `/docs`, potom ulož. Po sloučení změn je aplikace dostupná na
 <https://milhouska-cen59600.github.io/sql-trainer-presentation/>.
