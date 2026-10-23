@@ -41,7 +41,7 @@ class CatalogTests(unittest.TestCase):
         self.assertEqual(
             {level: sum(task["level"] == level for task in self.catalog)
              for level in builder.LEVELS},
-            {"zaklady": 35, "pokrocile": 25},
+            {"zaklady": 38, "pokrocile": 22},
         )
         self.assertEqual(
             {type_: sum(task["type"] == type_ for task in self.catalog)
@@ -65,7 +65,7 @@ class CatalogTests(unittest.TestCase):
         self.assertIs(builder.validate_outline(outline), outline)
         pairs = {(topic["level"], topic["slug"]) for topic in outline["topics"]}
         self.assertTrue({(task["level"], task["topic"]) for task in self.catalog} <= pairs)
-        for level, expected in (("zaklady", 35), ("pokrocile", 25)):
+        for level, expected in (("zaklady", 38), ("pokrocile", 22)):
             self.assertEqual(sum(
                 sum(topic["quotas"].values()) for topic in outline["topics"]
                 if topic["level"] == level
@@ -73,6 +73,7 @@ class CatalogTests(unittest.TestCase):
         for type_, expected in (("write-query", 37), ("explain-result", 23)):
             self.assertEqual(sum(topic["quotas"][type_] for topic in outline["topics"]), expected)
         for topic in outline["topics"]:
+            self.assertEqual(topic["source"], {"zaklady": "basic", "pokrocile": "advanced"}[topic["level"]])
             source = outline["sources"][topic["source"]]
             self.assertTrue((ROOT / "materials" / source["file"]).is_file())
             self.assertTrue(topic["pages"])
@@ -99,6 +100,7 @@ class CatalogTests(unittest.TestCase):
                  {**valid, "topics": [valid["topics"][0]]}]
         for key, value in [
             ("level", "advanced"), ("level", []), ("slug", "SELECT dotaz"),
+            ("source", "advanced"),
             ("label", ""), ("quotas", {"find-bug": 50}),
             ("quotas", {"write-query": True, "explain-result": 49}),
             ("quotas", {"write-query": -1, "explain-result": 51}),

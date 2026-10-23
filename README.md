@@ -1,7 +1,7 @@
 # SQL trenažér z prezentace
 
 Jednoduchý český trenažér Oracle SQL bez frameworku, databáze a externích závislostí.
-Obsahuje 60 úloh odvozených z PDF v `materials/`: 35 základních a 25 pokročilých.
+Obsahuje 60 úloh odvozených z PDF v `materials/`: 38 základních a 22 pokročilých.
 Každá úloha obsahuje krátkou teorii, nápovědu a vzorové řešení; tam, kde jsou
 potřeba, také ukázková data.
 
@@ -22,6 +22,8 @@ repozitáře. JavaScript potřebuje moderní prohlížeč.
 Vyber úroveň **Základy** (`zaklady`) nebo **Pokročilé** (`pokrocile`), typ
 **Napiš dotaz**, **Vysvětli výsledek** a volitelně téma.
 Klikni na **Spustit**. **Další úloha** cyklicky prochází aktuální výběr.
+Témata i úlohy odpovídají pouze zvolené úrovni a jejímu zdrojovému PDF.
+Interní ID úloh se v nadpisech nezobrazují.
 Změna filtru vymaže rozepsanou odpověď a vyžaduje nové spuštění.
 Prázdná kombinace filtrů zobrazí zprávu, nikoli nesouvisející úlohu.
 

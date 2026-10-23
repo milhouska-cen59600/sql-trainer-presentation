@@ -1327,7 +1327,7 @@
   },
   {
     "id": 36,
-    "level": "pokrocile",
+    "level": "zaklady",
     "topic": "datum",
     "type": "write-query",
     "instruction": "Zahrň celý měsíc při filtrování data.",
@@ -1359,7 +1359,7 @@
   },
   {
     "id": 37,
-    "level": "pokrocile",
+    "level": "zaklady",
     "topic": "datove-typy",
     "type": "write-query",
     "instruction": "Převeď datum s explicitní maskou.",
@@ -1373,7 +1373,7 @@
   },
   {
     "id": 38,
-    "level": "pokrocile",
+    "level": "zaklady",
     "topic": "mnozinove-operace",
     "type": "explain-result",
     "instruction": "Vysvětli rozdíl množin.",

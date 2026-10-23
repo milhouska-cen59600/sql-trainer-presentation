@@ -1,6 +1,6 @@
 # Katalog 60 úloh z PDF
 
-Katalog obsahuje přesně **60 úloh**: **35 základních** a **25 pokročilých**.
+Katalog obsahuje přesně **60 úloh**: **38 základních** a **22 pokročilých**.
 Typy: **37× Napiš dotaz** (`write-query`) a **23× Vysvětli výsledek**
 (`explain-result`). Typ `find-bug` se nepoužívá.
 
@@ -14,20 +14,17 @@ odkazy a kvóty jsou v `materials/outline.json`; vlastní zadání jsou v
 | --- | --- | ---: | --- |
 | Základy | Výběr a řazení | 3 | `SQL_1_Data academy.pdf`, s. 13–17, 51, 68: SELECT, DISTINCT, ORDER BY |
 | Základy | Operátory | 3 | s. 17–19, 39–40, 87: WHERE, BETWEEN, LIKE, IN a porovnání |
-| Základy | Datové typy | 2 | s. 20–23, 27–33, 41–42: explicitní převod TO_DATE a TO_CHAR |
-| Základy | Datum | 2 | s. 21–26: ADD_MONTHS a LAST_DAY |
+| Základy | Datové typy | 3 | s. 20–23, 27–33, 41–42: explicitní převod TO_DATE a TO_CHAR |
+| Základy | Datum | 3 | s. 21–26: ADD_MONTHS, LAST_DAY a polootevřený interval pro DATE s časem |
 | Základy | Řetězce | 3 | s. 27–40: UPPER, SUBSTR, TRIM a REPLACE |
 | Základy | Čísla | 2 | s. 41–44: ROUND a MOD |
-| Základy | Množinové operace | 2 | s. 46–57: UNION ALL a INTERSECT |
+| Základy | Množinové operace | 3 | s. 46–57: UNION ALL, INTERSECT a MINUS |
 | Základy | Agregace | 4 | s. 59–66: SUM, AVG, MIN, MAX, COUNT, GROUP BY a HAVING |
 | Základy | Podmíněné výrazy | 2 | s. 68–74: CASE a DECODE |
 | Základy | Poddotazy | 4 | s. 75–80, 88–95, 132–134: skalární poddotaz, IN a EXISTS |
 | Základy | NULL a NVL | 2 | s. 81–86: NVL a vliv NULL na COUNT |
 | Základy | Spojování tabulek | 4 | s. 97–103, 109–131: INNER, LEFT a FULL OUTER JOIN |
 | Základy | WITH a CTE | 2 | s. 135–140: pojmenovaný mezivýsledek |
-| Pokročilé | Datum — opakovací most | 1 | Základy, s. 21–26: polootevřený interval pro Oracle DATE s časem |
-| Pokročilé | Datové typy — opakovací most | 1 | Základy, s. 20–23: převod textu na datum s maskou |
-| Pokročilé | Množinové operace — opakovací most | 1 | Základy, s. 46–55: MINUS |
 | Pokročilé | Řetězce | 2 | `Advanced_SQL_2_Data academy.pdf`, s. 3–7: CONVERT a TRANSLATE |
 | Pokročilé | LISTAGG | 2 | s. 8–11: agregace řetězců a pořadí ve WITHIN GROUP |
 | Pokročilé | Partitioning | 2 | s. 12–15: oddíly tabulky a jejich rozdíl od analytického PARTITION BY |
@@ -43,8 +40,8 @@ odkazy a kvóty jsou v `materials/outline.json`; vlastní zadání jsou v
 - Prezentace učí Oracle SQL a používá DWH schémata; pro úlohy jsou připraveny
   malé samostatné české ukázkové tabulky bez firemních dat a externích souborů.
 - Zadání a řešení jsou didaktické adaptace témat a příkladů z uvedených stran,
-  nikoli automatický přepis PDF. Pokročilé úlohy Datum, Datové typy a
-  Množinové operace jsou výslovně opakovací mosty ze základní prezentace.
+  nikoli automatický přepis PDF. Úroveň každé úlohy odpovídá zdrojové prezentaci;
+  úlohy ze základní prezentace nejsou součástí pokročilého výběru.
 - Úloha Partitioning předpokládá existující tabulku a oddíl; úloha datového
   slovníku předpokládá přístup k pohledům ALL_TABLES a ALL_TAB_COLUMNS.
 - Datumové příklady používají pevné hodnoty. U analytické agregace je rámec

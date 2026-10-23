@@ -355,7 +355,7 @@
     "keywords": ["200", "80", "120"]
   },
   {
-    "id": 36, "level": "pokrocile", "topic": "datum", "type": "write-query",
+    "id": 36, "level": "zaklady", "topic": "datum", "type": "write-query",
     "instruction": "Zahrň celý měsíc při filtrování data.",
     "prompt": "Vrať id akcí z února 2026 včetně libovolného času posledního dne. Použij polootevřený interval.",
     "sql": null, "solution": "SELECT id FROM akce WHERE konani >= DATE '2026-02-01' AND konani < DATE '2026-03-01';",
@@ -365,7 +365,7 @@
     "keywords": []
   },
   {
-    "id": 37, "level": "pokrocile", "topic": "datove-typy", "type": "write-query",
+    "id": 37, "level": "zaklady", "topic": "datove-typy", "type": "write-query",
     "instruction": "Převeď datum s explicitní maskou.",
     "prompt": "Převeď text '31.12.2026' na DATE. Uveď masku DD.MM.YYYY.",
     "sql": null, "solution": "SELECT TO_DATE('31.12.2026', 'DD.MM.YYYY') FROM dual;",
@@ -374,7 +374,7 @@
     "tables": [], "keywords": []
   },
   {
-    "id": 38, "level": "pokrocile", "topic": "mnozinove-operace", "type": "explain-result",
+    "id": 38, "level": "zaklady", "topic": "mnozinove-operace", "type": "explain-result",
     "instruction": "Vysvětli rozdíl množin.",
     "prompt": "Které hodnoty id zůstanou po operaci MINUS? Každou uveď jednou.",
     "sql": "SELECT id FROM a MINUS SELECT id FROM b;",

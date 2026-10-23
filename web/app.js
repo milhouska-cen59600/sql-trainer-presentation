@@ -67,7 +67,7 @@ function renderTask(index) {
   clearTask("");
   currentIndex = index;
   const task = currentTask();
-  element("task-heading").textContent = `Úloha #${task.id} · ${topicLabels[task.topic] || task.topic}`;
+  element("task-heading").textContent = `Úloha · ${topicLabels[task.topic] || task.topic}`;
   element("position").textContent = `Úloha ${index + 1} z ${selection.length}`;
   element("instruction").textContent = task.instruction;
   element("prompt").textContent = task.prompt;
@@ -88,6 +88,24 @@ function startSelection() {
   );
   if (selection.length) renderTask(0);
   else clearTask("Pro tento výběr zatím není úloha. Změň téma nebo typ a klikni na Spustit.");
+}
+
+function updateTopics() {
+  const selected = element("topic").value;
+  const topics = [...new Set(tasks
+    .filter((task) => task.level === element("level").value)
+    .map((task) => task.topic))].sort();
+  const all = document.createElement("option");
+  all.value = "";
+  all.textContent = "Všechna témata";
+  element("topic").replaceChildren(all);
+  for (const topic of topics) {
+    const option = document.createElement("option");
+    option.value = topic;
+    option.textContent = topicLabels[topic] || topic;
+    element("topic").append(option);
+  }
+  element("topic").value = topics.includes(selected) ? selected : "";
 }
 
 function normalizeSql(text) {
@@ -118,6 +136,7 @@ element("next").addEventListener("click", () => {
 });
 for (const id of ["level", "task-type", "topic"]) {
   element(id).addEventListener("change", () => {
+    if (id === "level") updateTopics();
     selection = [];
     clearTask("Výběr se změnil. Klikni na Spustit.");
   });
@@ -145,12 +164,7 @@ async function initialize() {
     const catalog = await response.json();
     if (!Array.isArray(catalog) || !catalog.length) throw new Error("Invalid catalog");
     tasks = catalog;
-    for (const topic of [...new Set(tasks.map((task) => task.topic))].sort()) {
-      const option = document.createElement("option");
-      option.value = topic;
-      option.textContent = topicLabels[topic] || topic;
-      element("topic").append(option);
-    }
+    updateTopics();
     element("load").disabled = false;
     clearTask("Vyber úroveň, typ a případně téma. Potom klikni na Spustit.");
   } catch {
