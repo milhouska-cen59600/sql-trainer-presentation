@@ -3,7 +3,7 @@
 ## Nevydáno
 
 Souhrn změn již sloučených do `main`, připravený jako podklad pro vydání.
-Tento release pass nemění obsah úloh ani chování aplikace.
+Release pass nemění obsah úloh ani chování aplikace; chování mění jen sekce Opravy.
 
 ### Opravy
 
