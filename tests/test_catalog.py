@@ -26,6 +26,16 @@ class CatalogTests(unittest.TestCase):
             with self.subTest(asset=name):
                 self.assertEqual((ROOT / "web" / name).read_bytes(), (ROOT / "docs" / name).read_bytes())
 
+    def test_application_branding(self):
+        for directory in ("web", "docs"):
+            with self.subTest(directory=directory):
+                html = (ROOT / directory / "index.html").read_text(encoding="utf-8")
+                for tag in ("title", "h1"):
+                    self.assertEqual(
+                        re.findall(rf"<{tag}\b[^>]*>(.*?)</{tag}>", html, re.DOTALL),
+                        ["SQL Trainer"],
+                    )
+
     def test_schema(self):
         self.assertIs(builder.validate_catalog(self.catalog), self.catalog)
         ids = [task["id"] for task in self.catalog]

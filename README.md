@@ -1,4 +1,4 @@
-# SQL trenažér z prezentace
+# SQL Trainer
 
 Jednoduchý český trenažér Oracle SQL bez frameworku, databáze a externích závislostí.
 Obsahuje 112 úloh odvozených z PDF v `materials/`: 64 základních a 48 pokročilých.
