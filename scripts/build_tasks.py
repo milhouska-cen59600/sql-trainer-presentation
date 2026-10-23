@@ -41,6 +41,8 @@ def validate_outline(outline):
             raise ValueError("Outline topic must have a canonical slug")
         if not isinstance(level, str) or level not in LEVELS:
             raise ValueError("Outline topic has an invalid level")
+        if "source" in topic and topic["source"] != {"zaklady": "basic", "pokrocile": "advanced"}[level]:
+            raise ValueError("Outline topic source does not match its level")
         if (level, slug) in pairs:
             raise ValueError("Duplicate outline level/topic")
         pairs.add((level, slug))
