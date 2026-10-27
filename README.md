@@ -46,6 +46,13 @@ Interní ID úloh se v nadpisech nezobrazují.
 Změna filtru vymaže rozepsanou odpověď a vyžaduje nové spuštění.
 Prázdná kombinace filtrů zobrazí zprávu, nikoli nesouvisející úlohu.
 
+Výsledek kontroly se zobrazí jako výrazný barevný panel s ikonou a textem:
+zelený **✓ Shoda se vzorem**, červený **✗ Neshoda se vzorem** (s upozorněním,
+že jiný správný zápis nemusí být rozpoznán) a žlutý **! Nejprve napiš odpověď**
+pro prázdnou odpověď. Panel je živý region (`role="status"`) a vymaže se
+(text i stav) při úpravě odpovědi, přechodu na jinou úlohu, náhodném výběru
+i změně filtru.
+
 Kontrola **neprovádí SQL**: porovnává tokeny se vzorem a u vysvětlení hledá
 všechna klíčová slova (bez ohledu na diakritiku a velikost písmen).
 SQL porovnání zachovává obsah literálů a uvozovaných identifikátorů.
@@ -120,12 +127,18 @@ Katalog je neprázdné JSON pole objektů. Povinné klíče:
 | `hint` | Nápověda |
 | `keywords` | Pole klíčových slov, čísel či ISO dat; neprázdné u vysvětlení, jinak `[]` |
 
+`name` je anglický identifikátor tabulky (např. `employees`, `products`, `sales`,
+`departments`); případná česká poznámka v závorce, např. `invoices (oddíl p2026)`,
+je jen popisek. Systémové pohledy Oracle (`ALL_TABLES`, `ALL_TAB_COLUMNS`,
+`ALL_TAB_PARTITIONS`), `dual` a `dwh_owner.parties` zůstávají beze změny; jejich
+metadata uvádějí anglické názvy ukázkových tabulek (`PRODUCTS`, `EMPLOYEES`).
 `columns` obsahuje anglické identifikátory a typy ve formátu
 `department (VARCHAR2(20))` nebo `amount (NUMBER(10,2))`; stejné identifikátory
-používej v zadání a SQL. `rows` obsahuje pole stejně širokých řádků.
+tabulek i sloupců používej v zadání, SQL a klíčových slovech.
+`rows` obsahuje pole stejně širokých řádků.
 Anglické jsou také výstupní aliasy a názvy CTE (např. `total`, `name_list`,
-`expensive`); české názvy existujících tabulek, přirozený text a datové hodnoty
-zůstávají zachovány.
+`expensive`); přirozený český text a datové hodnoty (např. `'Data'`, `'Káva'`)
+zůstávají zachovány. Konzistenci hlídá `tests/test_catalog.py`.
 Buňky jsou text, číslo nebo `null` (zobrazí se jako `NULL`). Data jsou pouze
 ukázka, ne databáze. Poznámky o chybějících hodnotách přidávej jen tam, kde mají
 význam. `explain-result` vyžaduje neprázdné `sql`.
@@ -151,6 +164,7 @@ Generátor synchronizuje pouze `tasks.json`; UI ani plán katalogu negeneruje.
 Po úpravě HTML/JS/CSS spusť:
 
 ```sh
+sha256sum web/app.js web/styles.css   # prvních 8 znaků do ?v= ve web/index.html
 cp web/index.html web/app.js web/styles.css docs/
 python -m unittest discover -s tests -v
 ```
