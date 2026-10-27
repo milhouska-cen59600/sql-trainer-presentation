@@ -262,7 +262,9 @@ function repairCandidates(solution) {
       const comma = tokens.findIndex((token, index) =>
         index > i + 1 && index < end && depths[index] === level + 1 && token === ",");
       if (comma !== -1) add("function-arguments", comma, 1, "");
-      else if (end > i + 2) add("function-arguments", i + 2, end - i - 2, "");
+      else if (end > i + 2 && !tokens.slice(i + 2, end).some((token) => /^['"]/.test(token))) {
+        add("function-arguments", i + 2, end - i - 2, "");
+      }
     }
     if (word === "SELECT") {
       const start = next === "DISTINCT" ? i + 2 : i + 1;

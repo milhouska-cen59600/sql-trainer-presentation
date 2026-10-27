@@ -517,6 +517,18 @@ test("mutations preserve comments, literals, quoted and unrelated identifiers", 
     .some((candidate) => candidate.family === "filter"));
   assert.ok(!context.repairCandidates("SELECT UPPER('123') FROM dual;")
     .some((candidate) => candidate.family === "function"));
+  for (const sql of [
+    "SELECT UPPER('123') FROM dual;",
+    "SELECT TRIM(' FROM WHERE ') FROM dual;",
+    'SELECT UPPER("name") FROM products;',
+    `SELECT INITCAP(TRIM("name")) FROM products;`,
+  ]) {
+    const quoted = (text) => Array.from(context.sqlTokens(text)).filter((token) => /^['"]/.test(token));
+    for (const candidate of context.repairCandidates(sql)) {
+      assert.deepEqual(quoted(candidate.sql), quoted(sql));
+      assert.equal(check(candidate.sql, { type: "fix-sql", solution: sql }), false);
+    }
+  }
 });
 
 test("session repeat avoidance follows displayed repairs, not hidden selection candidates", async () => {
