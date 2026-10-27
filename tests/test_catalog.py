@@ -55,32 +55,132 @@ class CatalogTests(unittest.TestCase):
             self.assertIn(task["level"], builder.LEVELS)
             self.assertIn(task["type"], builder.TYPES)
 
+    def test_sample_columns_have_english_identifiers_and_oracle_types(self):
+        english_names = {
+            "id", "name", "last_name", "department", "department_id", "salary",
+            "price", "in_stock", "amount", "bonus", "event_date", "sale_date",
+            "period", "product", "january", "february", "channel", "code",
+            "manager_id", "reward", "team_id", "city", "room", "room_id",
+            "email", "team", "region", "month", "status_a", "status_b", "role",
+            "phone", "value", "start_date", "end_date", "points", "pt_key",
+            "party_name", "owner", "table_name", "column_name", "data_type",
+            "table_owner", "partition_name", "partition_position", "status",
+        }
+        for task in self.catalog:
+            for table in task["tables"]:
+                for header in table["columns"]:
+                    with self.subTest(task=task["id"], header=header):
+                        name, type_ = builder.parse_column_header(header)
+                        self.assertIn(name.lower(), english_names)
+                        self.assertEqual(header, f"{name} ({type_})")
+
+    def test_typed_header_parser_preserves_nested_type_parameters(self):
+        for header, expected in [
+            ("amount (NUMBER(10,2))", ("amount", "NUMBER(10,2)")),
+            ("name (VARCHAR2(30))", ("name", "VARCHAR2(30)")),
+            ("salary (NUMBER)", ("salary", "NUMBER")),
+            ("event_date (DATE)", ("event_date", "DATE")),
+        ]:
+            with self.subTest(header=header):
+                self.assertEqual(builder.parse_column_header(header), expected)
+
+    def test_canonical_sql_uses_english_column_identifiers(self):
+        old_identifiers = {
+            "body", "castka", "cena", "datum", "hodnota", "jmeno", "kanal",
+            "kod", "konani", "konec", "leden", "mesic", "mesto", "mistnost",
+            "mistnost_id", "mzda", "nazev", "obdobi", "oddeleni", "oddeleni_id",
+            "odmena", "prijmeni", "produkt", "skladem", "stav", "stav_a",
+            "stav_b", "telefon", "tym", "tym_id", "typ", "unor", "vedouci_id",
+            "zacatek",
+        }
+        for task in self.catalog:
+            for key in ("sql", "solution"):
+                query = task[key] or ""
+                if not re.match(r"(SELECT|WITH)\b", query):
+                    continue
+                query = re.sub(r"'(?:[^']|'')*'", " ", query)
+                for token in re.finditer(r"\b[a-z_]+\b", query, re.IGNORECASE):
+                    if re.search(r"\b(?:FROM|JOIN)\s*$", query[:token.start()], re.IGNORECASE):
+                        continue
+                    with self.subTest(task=task["id"], field=key, token=token[0]):
+                        self.assertNotIn(token[0].lower(), old_identifiers)
+
+    def test_write_prompts_do_not_include_redundant_strategy_clauses(self):
+        for task in self.catalog:
+            if task["type"] != "write-query":
+                continue
+            with self.subTest(task=task["id"]):
+                for field in ("prompt", "instruction"):
+                    self.assertNotRegex(
+                        task[field],
+                        r"(?i)\b(?:pomocí|WITHIN GROUP|ROW_NUMBER|NLSSORT|LISTAGG|HAVING"
+                        r"|skalární poddotaz)\b"
+                        r"|(?:^|[.!?] )Použij\b",
+                    )
+
+    def test_minimal_prompts_preserve_requested_fields_and_conditions(self):
+        examples = {
+            4: (("názvy produktů", "80", "120", "včetně"), r"\bBETWEEN\b"),
+            5: (("názvy produktů", "začínající písmenem K"), r"\bLIKE\b"),
+            19: (("department", "průměrnou mzdu", "alespoň 45 000"), r"\bHAVING\b"),
+            24: (
+                ("názvy produktů", "vyšší než průměrná cena všech produktů"),
+                r"skalárn\w* poddotaz\w*",
+            ),
+            30: (("jméno zaměstnance", "název jeho oddělení"), r"\bINNER JOIN\b"),
+        }
+        tasks = {task["id"]: task for task in self.catalog}
+        for id_, (requirements, strategy) in examples.items():
+            with self.subTest(task=id_):
+                task = tasks[id_]
+                for requirement in requirements:
+                    self.assertIn(requirement, task["prompt"])
+                for field in ("prompt", "instruction"):
+                    self.assertNotRegex(task[field], "(?i)" + strategy)
+
+    def test_invalid_typed_headers_and_duplicate_names_are_rejected(self):
+        for header in [
+            None, "", "id", "id NUMBER", "amount NUMBER(10,2)",
+            "amount (NUMBER(10,2)", "amount (NUMBER(10,2)))",
+            "name (VARCHAR2())", "name (VARCHAR2(0))", "id (UNKNOWN)",
+            "1name (NUMBER)", "jméno (VARCHAR2(30))", "name (varchar2(30))",
+        ]:
+            with self.subTest(header=header):
+                catalog = copy.deepcopy(self.catalog[:1])
+                catalog[0]["tables"][0]["columns"][0] = header
+                with self.assertRaises(ValueError):
+                    builder.validate_catalog(catalog)
+        catalog = copy.deepcopy(self.catalog[:1])
+        catalog[0]["tables"][0]["columns"][1] = "ID (VARCHAR2(30))"
+        with self.assertRaisesRegex(ValueError, "duplicate column names"):
+            builder.validate_catalog(catalog)
+
     def test_relational_examples_match_task_schemas(self):
         examples = {
-            43: [("faktury (oddíl p2026)", ["id NUMBER", "castka NUMBER(10,2)"])],
-            45: [("ALL_TABLES", ["OWNER VARCHAR2(30)", "TABLE_NAME VARCHAR2(30)"])],
+            43: [("faktury (oddíl p2026)", ["id (NUMBER)", "amount (NUMBER(10,2))"])],
+            45: [("ALL_TABLES", ["OWNER (VARCHAR2(30))", "TABLE_NAME (VARCHAR2(30))"])],
             46: [("ALL_TAB_COLUMNS", [
-                "OWNER VARCHAR2(30)", "TABLE_NAME VARCHAR2(30)",
-                "COLUMN_NAME VARCHAR2(30)", "DATA_TYPE VARCHAR2(30)",
+                "OWNER (VARCHAR2(30))", "TABLE_NAME (VARCHAR2(30))",
+                "COLUMN_NAME (VARCHAR2(30))", "DATA_TYPE (VARCHAR2(30))",
             ])],
             85: [("dwh_owner.parties (oddíl partition_11)", [
-                "pt_key NUMBER", "party_name VARCHAR2(40)",
+                "pt_key (NUMBER)", "party_name (VARCHAR2(40))",
             ])],
             86: [
                 ("dwh_owner.parties (oddíl partition_11)", [
-                    "pt_key NUMBER", "party_name VARCHAR2(40)",
+                    "pt_key (NUMBER)", "party_name (VARCHAR2(40))",
                 ]),
-                ("zamestnanci", ["id NUMBER", "oddeleni VARCHAR2(20)", "mzda NUMBER"]),
+                ("zamestnanci", ["id (NUMBER)", "department (VARCHAR2(20))", "salary (NUMBER)"]),
             ],
             87: [("ALL_TAB_COLUMNS", [
-                "OWNER VARCHAR2(30)", "TABLE_NAME VARCHAR2(30)", "COLUMN_NAME VARCHAR2(30)",
+                "OWNER (VARCHAR2(30))", "TABLE_NAME (VARCHAR2(30))", "COLUMN_NAME (VARCHAR2(30))",
             ])],
             88: [("ALL_TAB_COLUMNS", [
-                "OWNER VARCHAR2(30)", "TABLE_NAME VARCHAR2(30)",
-                "COLUMN_NAME VARCHAR2(30)", "DATA_TYPE VARCHAR2(30)",
+                "OWNER (VARCHAR2(30))", "TABLE_NAME (VARCHAR2(30))",
+                "COLUMN_NAME (VARCHAR2(30))", "DATA_TYPE (VARCHAR2(30))",
             ])],
-            94: [("zamestnanci", ["oddeleni VARCHAR2(20)", "role VARCHAR2(20)"])],
-            96: [("data", ["hodnota VARCHAR2(20)"])],
+            94: [("zamestnanci", ["department (VARCHAR2(20))", "role (VARCHAR2(20))"])],
+            96: [("data", ["value (VARCHAR2(20))"])],
         }
         tasks = {task["id"]: task for task in self.catalog}
         for id_, schemas in examples.items():
@@ -195,9 +295,12 @@ class CatalogTests(unittest.TestCase):
     def test_corrected_sample_results(self):
         # Only portable SQL is executed here, not Oracle-specific syntax.
         expected = {
+            4: [("Čaj",), ("Kakao",)],
+            5: [("Káva",), ("Kakao",)],
             19: [("Data", 47500)],
             24: [("Káva",), ("Kakao",)],
             27: [(40,)],
+            30: [("Eva", "Data"), ("Petr", "Data"), ("Iva", "Prodej")],
             34: [("Káva",), ("Kakao",)],
             35: [(200,)],
             45: [("OBJEDNAVKY",), ("PRODUKTY",), ("ZAMESTNANCI",)],
@@ -214,7 +317,7 @@ class CatalogTests(unittest.TestCase):
                 continue
             with self.subTest(task=task["id"]), sqlite3.connect(":memory:") as db:
                 for table in task["tables"]:
-                    columns = [column.split()[0] for column in table["columns"]]
+                    columns = [builder.parse_column_header(column)[0] for column in table["columns"]]
                     db.execute(f"CREATE TABLE {table['name']} ({', '.join(columns)})")
                     placeholders = ", ".join("?" for _ in columns)
                     db.executemany(f"INSERT INTO {table['name']} VALUES ({placeholders})", table["rows"])

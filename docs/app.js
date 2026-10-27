@@ -32,6 +32,7 @@ function clearTask(message) {
   for (const id of ["sql-section", "theory-section", "hint-section", "solution-section"]) {
     element(id).hidden = true;
   }
+  element("theory-section").open = false;
   element("task-heading").textContent = "Zadání";
   element("prompt").textContent = message;
   element("tables").replaceChildren();
@@ -72,18 +73,28 @@ function renderTask(index) {
   element("instruction").textContent = task.instruction;
   element("prompt").textContent = task.prompt;
   renderTables(task.tables);
-  for (const name of ["sql", "theory"]) {
-    element(name).textContent = task[name] || "";
-    element(`${name}-section`).hidden = !task[name];
-  }
-  element("answer").value = "";
+  element("sql").textContent = task.sql ? formatSql(task.sql) : "";
+  element("sql-section").hidden = !task.sql;
+  element("sql-heading").textContent = task.type === "fix-sql" ? "SQL k opravě" : "SQL k rozboru";
+  element("theory").textContent = task.theory || "";
+  element("theory-section").hidden = !task.theory;
+  element("answer").value = task.type === "fix-sql" ? formatSql(task.sql) : "";
   setActions(true);
 }
 
+function exerciseTasks(type) {
+  const fixes = tasks.filter((task) => task.type === "write-query").map((task) => ({
+    ...task,
+    type: "fix-sql",
+    instruction: "Oprav SQL tak, aby splňovalo zadání.",
+    sql: faultySql(task.solution),
+  }));
+  return type === "fix-sql" ? fixes : type ? tasks.filter((task) => task.type === type) : [...tasks, ...fixes];
+}
+
 function startSelection() {
-  selection = tasks.filter((task) =>
+  selection = exerciseTasks(element("task-type").value).filter((task) =>
     task.level === element("level").value &&
-    task.type === element("task-type").value &&
     (!element("topic").value || task.topic === element("topic").value)
   );
   if (selection.length) renderTask(0);
@@ -91,7 +102,7 @@ function startSelection() {
 }
 
 function startRandomSelection() {
-  selection = tasks.filter((task) => task.level === element("level").value);
+  selection = exerciseTasks().filter((task) => task.level === element("level").value);
   if (selection.length) renderTask(Math.floor(Math.random() * selection.length));
   else clearTask("Pro zvolenou úroveň zatím není úloha. Změň úroveň a zkus to znovu.");
 }
@@ -120,6 +131,80 @@ function normalizeSql(text) {
   const tokens = text.match(/'(?:''|[^'])*'|"(?:""|[^"])*"|[\p{L}_][\p{L}\p{N}_$#]*|\d+(?:\.\d+)?|>=|<=|<>|!=|\|\||[^\s]/gu) || [];
   if (tokens.at(-1) === ";") tokens.pop();
   return JSON.stringify(tokens.map((token) => /^['"]/.test(token) ? token : token.toLowerCase()));
+}
+
+function sqlTokens(sql) {
+  return sql.match(/--[^\r\n]*|\/\*[\s\S]*?\*\/|'(?:''|[^'])*'|"(?:""|[^"])*"|[\p{L}_][\p{L}\p{N}_$#]*|\d+(?:\.\d+)?|>=|<=|<>|!=|\|\||[^\s]/gu) || [];
+}
+
+function formatSql(sql) {
+  const tokens = sqlTokens(sql);
+  const lines = [];
+  const nesting = [];
+  let line = "", previous = "";
+  const indent = () => "  ".repeat(nesting.filter(Boolean).length);
+  const flush = () => {
+    if (line.trim()) lines.push(line.trimEnd());
+    line = "";
+  };
+  const clauses = /^(SELECT|FROM|FORM|WHERE|HAVING|WITH|UNION|INTERSECT|MINUS|JOIN|ON)$/i;
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+    const upper = token.toUpperCase();
+    const next = (tokens[i + 1] || "").toUpperCase();
+    const queryLevel = !nesting.length || nesting.at(-1);
+    const joinPrefix = /^(LEFT|RIGHT|FULL|INNER|CROSS|OUTER)$/i;
+    const clause = queryLevel && (
+      clauses.test(token) ||
+      (/^(GROUP|ORDER|SORT|CONNECT|START)$/i.test(token) && /^(BY|WITH)$/.test(next)) ||
+      (joinPrefix.test(token) && /^(JOIN|OUTER)$/.test(next))
+    );
+    if (clause && !(upper === "JOIN" && joinPrefix.test(previous)) &&
+        !(upper === "OUTER" && joinPrefix.test(previous))) flush();
+    if (token === ")" && nesting.pop()) flush();
+    if (!line) line = indent();
+    const tight = /^[,;.)]$/.test(token) || previous === "." || previous === "(" ||
+      (token === "(" && /^[\p{L}_][\p{L}\p{N}_$#]*$/u.test(previous) &&
+       !/^(AS|IN|OVER|PARTITION|ROLLUP|CUBE|PIVOT|UNPIVOT|GROUP|EXISTS)$/i.test(previous));
+    if (line.trim() && !tight) line += " ";
+    line += token;
+    if (token === "(") {
+      const subquery = /^(SELECT|WITH)$/.test(next);
+      nesting.push(subquery);
+      if (subquery) flush();
+    } else if (token === "," && queryLevel) {
+      flush();
+      line = `${indent()}  `;
+    } else if (token.startsWith("--")) flush();
+    previous = token;
+  }
+  flush();
+  return lines.join("\n");
+}
+
+function faultySql(solution) {
+  const tokens = sqlTokens(solution);
+  // Change only unquoted tokens, never literals or quoted identifiers.
+  const order = tokens.findIndex((token, index) =>
+    /^ORDER$/i.test(token) && /^BY$/i.test(tokens[index + 1] || ""));
+  if (order !== -1) {
+    tokens[order] = "SORT";
+  } else {
+    const group = tokens.findIndex((token, index) =>
+      /^GROUP$/i.test(token) && /^BY$/i.test(tokens[index + 1] || ""));
+    if (group !== -1) tokens.splice(group + 1, 1);
+    else {
+      const join = tokens.findIndex((token) => /^ON$/i.test(token));
+      const equality = join === -1 ? -1 : tokens.indexOf("=", join);
+      if (equality !== -1) tokens[equality] = "<>";
+      else {
+        const from = tokens.findIndex((token) => /^FROM$/i.test(token));
+        if (from !== -1) tokens[from] = "FORM";
+        else tokens[tokens.findIndex((token) => /^SELECT$/i.test(token))] = "SELEC";
+      }
+    }
+  }
+  return formatSql(tokens.join(" "));
 }
 
 function words(text) {
@@ -152,7 +237,9 @@ for (const id of ["level", "task-type", "topic"]) {
 for (const name of ["hint", "solution"]) {
   element(`${name}-button`).addEventListener("click", () => {
     if (!currentTask()) return;
-    element(name).textContent = currentTask()[name];
+    const task = currentTask();
+    element(name).textContent = name === "solution" && task.type !== "explain-result" ?
+      formatSql(task[name]) : task[name];
     element(`${name}-section`).hidden = false;
   });
 }

@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>SQL Trainer</title>
-  <link rel="stylesheet" href="./styles.css?v=715dcaf0">
-  <script src="./app.js?v=2ee94fc5" defer></script>
+  <link rel="stylesheet" href="./styles.css?v=c97ea566">
+  <script src="./app.js?v=d2ae1582" defer></script>
 </head>
 <body>
   <main>
@@ -27,6 +27,7 @@
           <select id="task-type">
             <option value="write-query">Napiš dotaz</option>
             <option value="explain-result">Vysvětli výsledek</option>
+            <option value="fix-sql">Oprav SQL</option>
           </select>
         </label>
         <label>Téma
@@ -36,7 +37,7 @@
         <button id="random" disabled>Náhodná úloha ve zvolené úrovni</button>
       </div>
       <p>Změň výběr a klikni na Spustit. Další úloha prochází stejný výběr postupně.</p>
-      <p>Náhodná úloha vybírá ze všech témat a obou typů ve zvolené úrovni.</p>
+      <p>Náhodná úloha vybírá ze všech témat a typů ve zvolené úrovni.</p>
     </section>
     <section class="card task-panel" aria-labelledby="task-heading">
       <p id="position"></p>
@@ -45,13 +46,13 @@
       <p id="prompt" role="status">Načítám katalog úloh…</p>
       <div id="tables"></div>
       <section id="sql-section" hidden>
-        <h3>SQL k rozboru</h3>
+        <h3 id="sql-heading">SQL k rozboru</h3>
         <pre id="sql"></pre>
       </section>
-      <section id="theory-section" hidden>
-        <h3>Teorie</h3>
+      <details id="theory-section" hidden>
+        <summary>Teorie</summary>
         <p id="theory"></p>
-      </section>
+      </details>
     </section>
     <form id="answer-form" class="card task-panel answer-panel">
       <label for="answer">Tvoje odpověď</label>
