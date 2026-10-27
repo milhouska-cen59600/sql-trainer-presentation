@@ -56,7 +56,8 @@ odkazy a kvóty jsou v `materials/outline.json`; vlastní zadání jsou v
 ## Adaptace a předpoklady
 
 - Prezentace učí Oracle SQL a používá DWH schémata; pro úlohy jsou připraveny
-  malé samostatné české ukázkové tabulky bez firemních dat a externích souborů.
+  malé samostatné ukázkové tabulky s anglickými identifikátory a českými hodnotami,
+  bez firemních dat a externích souborů.
 - Zadání a řešení jsou didaktické adaptace témat a příkladů z uvedených stran,
   nikoli automatický přepis PDF. Úroveň každé úlohy odpovídá zdrojové prezentaci;
   úlohy ze základní prezentace nejsou součástí pokročilého výběru.

@@ -11,6 +11,15 @@ Release pass nemění obsah úloh ani chování aplikace; chování mění jen s
   nový `index.html` se spojil se starým `app.js` z cache prohlížeče, který
   tlačítko neznal. `app.js` a `styles.css` se nyní načítají s hashem obsahu
   v URL a tlačítko je aktivní, kdykoli zvolená úroveň obsahuje úlohy.
+- Přímé commity `fbe6435` a `d6a8561` upravily jen `web/` (nikoli publikované
+  `docs/`), useknuly odstavec pravidel v `index.html` a jako cache verzi použily
+  prefix commitu místo SHA-256 obsahu. Odstavec je obnoven, `docs/` synchronizováno
+  a hashe přepočítány.
+- Názvy tabulek jsou nyní anglické identifikátory (`employees`, `products`,
+  `sales`, …) v metadatech, SQL, zadáních i datovém slovníku; české texty
+  a datové hodnoty zůstaly. ID, počty a pokrytí témat se nemění.
+- Vyhodnocení odpovědi je výrazný zelený/červený/žlutý panel s ikonou;
+  neshoda se vzorem netvrdí, že je dotaz neplatný.
 
 ### Doplnění podle gap analýzy
 

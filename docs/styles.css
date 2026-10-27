@@ -50,6 +50,19 @@ th, td { border: 1px solid #38546e; padding: .45rem .7rem; text-align: left; whi
 th { background: #1d3651; }
 #rules, footer { font-size: .9rem; color: #526980; }
 #feedback { font-weight: 700; }
+#feedback:empty { display: none; }
+#feedback.feedback-success, #feedback.feedback-error, #feedback.feedback-empty {
+  margin: 1rem 0;
+  padding: 1rem 1.25rem;
+  border: 2px solid;
+  border-left-width: .6rem;
+  border-radius: .6rem;
+  font-size: 1.15rem;
+  line-height: 1.45;
+}
+.answer-panel #feedback.feedback-success { background: #e3f6e8; color: #0f4a24; border-color: #2e9b55; }
+.answer-panel #feedback.feedback-error { background: #fde7e7; color: #7c1515; border-color: #d0393a; }
+.answer-panel #feedback.feedback-empty { background: #fff3d6; color: #5a3b00; border-color: #d09a1c; }
 [hidden] { display: none !important; }
 @media (max-width: 600px) {
   main { padding: 1rem .6rem; }

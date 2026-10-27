@@ -1,5 +1,6 @@
 import copy
 import hashlib
+from html.parser import HTMLParser
 import importlib.util
 import json
 from pathlib import Path
@@ -106,6 +107,106 @@ class CatalogTests(unittest.TestCase):
                         continue
                     with self.subTest(task=task["id"], field=key, token=token[0]):
                         self.assertNotIn(token[0].lower(), old_identifiers)
+
+    def test_table_identifiers_are_english_and_consistent(self):
+        english_tables = {
+            "employees", "products", "sales", "departments", "people", "persons",
+            "rewards", "payments", "invoices", "events", "records", "active_items",
+            "archived_items", "left_items", "right_items", "teams", "rooms",
+            "statuses", "contacts", "periods", "students", "data", "a", "b",
+            "dwh_owner.parties",
+        }
+        oracle_views = {"ALL_TABLES", "ALL_TAB_COLUMNS", "ALL_TAB_PARTITIONS"}
+        old_tables = {
+            "zamestnanci", "produkty", "prodeje", "oddeleni", "lide", "osoby",
+            "odmeny", "platby", "faktury", "akce", "zaznamy", "aktualni", "archiv",
+            "leva", "prava", "tymy", "mistnosti", "stavy", "kontakty", "obdobi",
+            "studenti", "objednavky",
+        }
+        for task in self.catalog:
+            names = {table["name"].split(" (")[0] for table in task["tables"]}
+            with self.subTest(task=task["id"]):
+                self.assertLessEqual(names, english_tables | oracle_views)
+                ctes = set()
+                for key in ("sql", "solution"):
+                    query = task[key] or ""
+                    if not re.match(r"(SELECT|WITH)\b", query):
+                        continue
+                    ctes |= {name.lower() for name in re.findall(r"(\w+)\s+AS\s*\(", query)}
+                    query = re.sub(r"'(?:[^']|'')*'", " ", query)
+                    for name in re.findall(r"\b(?:FROM|JOIN)\s+([\w.$#]+)", query, re.IGNORECASE):
+                        if name.upper() in oracle_views:
+                            self.assertIn(name.upper(), names)
+                        elif name.lower() != "dual" and name.lower() not in ctes:
+                            self.assertIn(name, names)
+                text = " ".join(str(value) for value in (
+                    task["prompt"], task["sql"], task["solution"], task["hint"],
+                    task["theory"], *task["keywords"],
+                    *(cell for table in task["tables"] if table["name"] in oracle_views
+                      for row in table["rows"] for cell in row),
+                ))
+                # Czech natural text (e.g. "Vyber produkty", "každého prodeje") stays allowed;
+                # only identifier positions must not use the old Czech table names.
+                for old in old_tables:
+                    self.assertNotRegex(
+                        text, rf"(?i)\b(?:FROM|JOIN|tabulk[ayu]|tabulek|ze?)\s+{old}\b|'{old}'"
+                    )
+                    for table in task["tables"]:
+                        if table["name"] in oracle_views:
+                            self.assertNotIn(old.upper(), [cell for row in table["rows"] for cell in row])
+
+    def test_index_html_is_complete_and_well_formed(self):
+        class Checker(HTMLParser):
+            void = {"meta", "link", "br", "img", "input", "hr"}
+
+            def __init__(self):
+                super().__init__()
+                self.stack, self.rules = [], None
+
+            def handle_starttag(self, tag, attrs):
+                if tag not in self.void:
+                    self.stack.append(tag)
+                if dict(attrs).get("id") == "rules":
+                    self.rules = ""
+
+            def handle_endtag(self, tag):
+                assert self.stack and self.stack.pop() == tag, tag
+                if tag == "p" and self.rules is not None and not isinstance(self.rules, tuple):
+                    self.rules = (self.rules,)
+
+            def handle_data(self, data):
+                if isinstance(self.rules, str):
+                    self.rules += data
+
+        for directory in ("web", "docs"):
+            with self.subTest(directory=directory):
+                html = (ROOT / directory / "index.html").read_text(encoding="utf-8")
+                self.assertNotIn("[...]", html)
+                checker = Checker()
+                checker.feed(html)
+                checker.close()
+                self.assertEqual(checker.stack, [])
+                self.assertEqual(checker.rules, (
+                    "SQL se neprovádí. Kontrola porovnává zápis se vzorem (ignoruje mezery a "
+                    "velikost SQL klíčových slov); vysvětlení hledá klíčová slova. Jiná správná "
+                    "řešení nemusí rozpoznat.",
+                ))
+                self.assertRegex(html, r'<p id="feedback" role="status" aria-live="polite"></p>')
+
+    def test_feedback_states_have_prominent_accessible_styles(self):
+        css = (ROOT / "web/styles.css").read_text(encoding="utf-8")
+        app = (ROOT / "web/app.js").read_text(encoding="utf-8")
+        for state in ("feedback-success", "feedback-error", "feedback-empty"):
+            with self.subTest(state=state):
+                self.assertIn(f'"{state}"', app)
+                rule = re.search(rf"(?m)^\.answer-panel #feedback\.{state} \{{([^}}]*)\}}", css)
+                self.assertIsNotNone(rule)
+                for prop in ("background", "color", "border-color"):
+                    self.assertRegex(rule[1], rf"(?:^|;|\s){prop}:")
+        shared = re.search(r"(?m)^#feedback\.feedback-success,[^{]*\{([^}]*)\}", css)
+        self.assertIsNotNone(shared)
+        for prop in ("padding", "border", "font-size"):
+            self.assertRegex(shared[1], rf"(?:^|;|\s){prop}:")
 
     def test_english_aliases_and_ctes_stay_consistent_with_czech_prompts(self):
         aliases = {
@@ -234,7 +335,7 @@ console.log(JSON.stringify(tasks.filter(t => t.type === 'write-query')
 
     def test_relational_examples_match_task_schemas(self):
         examples = {
-            43: [("faktury (oddíl p2026)", ["id (NUMBER)", "amount (NUMBER(10,2))"])],
+            43: [("invoices (oddíl p2026)", ["id (NUMBER)", "amount (NUMBER(10,2))"])],
             45: [("ALL_TABLES", ["OWNER (VARCHAR2(30))", "TABLE_NAME (VARCHAR2(30))"])],
             46: [("ALL_TAB_COLUMNS", [
                 "OWNER (VARCHAR2(30))", "TABLE_NAME (VARCHAR2(30))",
@@ -247,7 +348,7 @@ console.log(JSON.stringify(tasks.filter(t => t.type === 'write-query')
                 ("dwh_owner.parties (oddíl partition_11)", [
                     "pt_key (NUMBER)", "party_name (VARCHAR2(40))",
                 ]),
-                ("zamestnanci", ["id (NUMBER)", "department (VARCHAR2(20))", "salary (NUMBER)"]),
+                ("employees", ["id (NUMBER)", "department (VARCHAR2(20))", "salary (NUMBER)"]),
             ],
             87: [("ALL_TAB_COLUMNS", [
                 "OWNER (VARCHAR2(30))", "TABLE_NAME (VARCHAR2(30))", "COLUMN_NAME (VARCHAR2(30))",
@@ -256,7 +357,7 @@ console.log(JSON.stringify(tasks.filter(t => t.type === 'write-query')
                 "OWNER (VARCHAR2(30))", "TABLE_NAME (VARCHAR2(30))",
                 "COLUMN_NAME (VARCHAR2(30))", "DATA_TYPE (VARCHAR2(30))",
             ])],
-            94: [("zamestnanci", ["department (VARCHAR2(20))", "role (VARCHAR2(20))"])],
+            94: [("employees", ["department (VARCHAR2(20))", "role (VARCHAR2(20))"])],
             96: [("data", ["value (VARCHAR2(20))"])],
         }
         tasks = {task["id"]: task for task in self.catalog}
@@ -380,7 +481,7 @@ console.log(JSON.stringify(tasks.filter(t => t.type === 'write-query')
             30: [("Eva", "Data"), ("Petr", "Data"), ("Iva", "Prodej")],
             34: [("Káva",), ("Kakao",)],
             35: [(200,)],
-            45: [("OBJEDNAVKY",), ("PRODUKTY",), ("ZAMESTNANCI",)],
+            45: [("EMPLOYEES",), ("ORDERS",), ("PRODUCTS",)],
             58: [(1, "Data", 45000, 3), (2, "Data", 50000, 1),
                  (3, "Prodej", 40000, 1), (4, "Data", 50000, 2)],
             63: [(1,), (3,)],

@@ -24,6 +24,25 @@ function setActions(enabled) {
   }
 }
 
+const feedbackStates = {
+  empty: ["feedback-empty", "! Nejprve napiš odpověď."],
+  success: ["feedback-success", "✓ Shoda se vzorem. Odpověď odpovídá vzoru nebo požadovaným klíčovým slovům."],
+  error: ["feedback-error", "✗ Neshoda se vzorem. Kontrola SQL neprovádí, proto nemusí rozpoznat jiný správný zápis nebo formulaci. Zkus nápovědu nebo porovnej vzorové řešení."],
+};
+
+function resetFeedback() {
+  const feedback = element("feedback");
+  feedback.textContent = "";
+  feedback.classList.remove(...Object.values(feedbackStates).map(([className]) => className));
+}
+
+function showFeedback(state) {
+  resetFeedback();
+  const [className, message] = feedbackStates[state];
+  element("feedback").classList.add(className);
+  element("feedback").textContent = message;
+}
+
 function clearTask(message) {
   currentIndex = -1;
   setActions(false);
@@ -38,6 +57,7 @@ function clearTask(message) {
   element("prompt").textContent = message;
   element("tables").replaceChildren();
   element("answer").value = "";
+  resetFeedback();
 }
 
 function renderTables(tables) {
@@ -81,6 +101,7 @@ function renderTask(index) {
   element("theory").textContent = task.theory || "";
   element("theory-section").hidden = !task.theory;
   element("answer").value = task.type === "fix-sql" ? formatSql(task.sql) : "";
+  resetFeedback();
   setActions(true);
 }
 
@@ -367,13 +388,12 @@ for (const name of ["hint", "solution"]) {
     element(`${name}-section`).hidden = false;
   });
 }
+element("answer").addEventListener("input", resetFeedback);
 element("answer-form").addEventListener("submit", (event) => {
   event.preventDefault();
   if (!currentTask()) return;
   const answer = element("answer").value;
-  element("feedback").textContent = !answer.trim() ? "Nejprve napiš odpověď." :
-    checkAnswer(answer, currentTask()) ? "Odpověď odpovídá vzoru nebo požadovaným klíčovým slovům." :
-      "Odpověď se neshoduje se vzorem. Zkus nápovědu nebo porovnej vzorové řešení; kontrola není SQL engine.";
+  showFeedback(!answer.trim() ? "empty" : checkAnswer(answer, currentTask()) ? "success" : "error");
 });
 
 async function initialize() {

@@ -13,9 +13,19 @@ const context = vm.createContext({
 vm.runInContext(fs.readFileSync(path.join(root, "web/app.js"), "utf8"), context);
 const check = (answer, task) => context.checkAnswer(answer, task);
 
+function classList() {
+  const names = new Set();
+  return {
+    add: (...items) => items.forEach((item) => names.add(item)),
+    remove: (...items) => items.forEach((item) => names.delete(item)),
+    contains: (item) => names.has(item),
+    values: () => [...names],
+  };
+}
+
 async function createApp(random = Math.random) {
   const node = () => ({
-    value: "", textContent: "", children: [], listeners: {},
+    value: "", textContent: "", children: [], listeners: {}, classList: classList(),
     addEventListener(name, listener) { this.listeners[name] = listener; },
     append(...children) { this.children.push(...children); },
     replaceChildren(...children) { this.children = children; },
@@ -114,7 +124,7 @@ test("start and next stay within each level, type and topic, without internal ID
           }
           get("answer").value = task.solution;
           trigger("answer-form", "submit");
-          assert.match(get("feedback").textContent, /^Odpověď odpovídá/);
+          assert.match(get("feedback").textContent, /^✓ Shoda se vzorem\./);
           trigger("next");
         }
         assert.equal(current().id, expected[0].id);
@@ -155,6 +165,60 @@ test("changing filters clears stale tasks and answers; empty selections never fa
   assert.equal(current().level, "pokrocile");
 });
 
+test("feedback shows distinct empty, match and mismatch states and resets text and classes", async () => {
+  let random = 0;
+  const { get, trigger, current } = await createApp(() => random);
+  const states = ["feedback-empty", "feedback-success", "feedback-error"];
+  const feedbackState = () => states.filter((name) => get("feedback").classList.contains(name));
+  const assertCleared = (step) => {
+    assert.equal(get("feedback").textContent, "", step);
+    assert.deepEqual(feedbackState(), [], step);
+  };
+  const submit = (answer) => {
+    get("answer").value = answer;
+    trigger("answer-form", "submit");
+  };
+  trigger("load");
+  assertCleared("load");
+
+  submit("  \n ");
+  assert.deepEqual(feedbackState(), ["feedback-empty"]);
+  assert.match(get("feedback").textContent, /^! Nejprve napiš odpověď\.$/);
+
+  submit(current().solution);
+  assert.deepEqual(feedbackState(), ["feedback-success"]);
+  assert.match(get("feedback").textContent, /^✓ Shoda se vzorem\./);
+
+  submit("SELECT 1 FROM dual;");
+  assert.deepEqual(feedbackState(), ["feedback-error"]);
+  assert.match(get("feedback").textContent, /^✗ Neshoda se vzorem\./);
+  // A mismatch is not a verdict on SQL validity: the check never executes SQL.
+  assert.match(get("feedback").textContent, /Kontrola SQL neprovádí/);
+  assert.match(get("feedback").textContent, /nemusí rozpoznat jiný správný zápis/);
+  assert.doesNotMatch(get("feedback").textContent, /Nesprávně|chybn/i);
+
+  for (const [step, action] of [
+    ["input", () => get("answer").listeners.input({})],
+    ["next", () => trigger("next")],
+    ["random", () => trigger("random")],
+    ["load", () => trigger("load")],
+    ["level", () => trigger("level", "change")],
+    ["task-type", () => trigger("task-type", "change")],
+    ["topic", () => trigger("topic", "change")],
+  ]) {
+    if (!current()) trigger("load");
+    submit("SELECT 1 FROM dual;");
+    assert.equal(feedbackState().length, 1, step);
+    action();
+    assertCleared(step);
+    if (!current()) continue;
+    submit(current().solution);
+    assert.deepEqual(feedbackState(), ["feedback-success"], step);
+    action();
+    assertCleared(step);
+  }
+});
+
 test("random selection samples every exercise in the selected level regardless of topic or type", async () => {
   let random = 0;
   const { get, trigger, current, exercises } = await createApp(() => random);
@@ -175,7 +239,7 @@ test("random selection samples every exercise in the selected level regardless o
         assert.equal(get("answer").disabled, false);
         get("answer").value = task.solution;
         trigger("answer-form", "submit");
-        assert.match(get("feedback").textContent, /^Odpověď odpovídá/);
+        assert.match(get("feedback").textContent, /^✓ Shoda se vzorem\./);
       }
     }
     for (const [value, index] of [[0, 0], [1 - Number.EPSILON, expected.length - 1]]) {
@@ -290,7 +354,7 @@ test("Partitioning renders the selected partition as sample-table context", asyn
   trigger("load");
 
   const table = get("tables").children[0].children[0];
-  assert.equal(table.caption.textContent, "faktury (oddíl p2026) · ukázková data");
+  assert.equal(table.caption.textContent, "invoices (oddíl p2026) · ukázková data");
   assert.deepEqual(Array.from(table.tHead.rows[0].children, (cell) => cell.textContent),
     ["id (NUMBER)", "amount (NUMBER(10,2))"]);
   assert.deepEqual(Array.from(table.tHead.rows[0].children, (cell) => cell.scope), ["col", "col"]);
@@ -384,10 +448,10 @@ test("Fix SQL derives every write task, preserves filters, and checks canonical 
         assert.match(task.sql, /\n/);
         assert.equal(check(task.sql, task), false);
         trigger("answer-form", "submit");
-        assert.match(get("feedback").textContent, /^Odpověď se neshoduje/);
+        assert.match(get("feedback").textContent, /^✗ Neshoda se vzorem\./);
         get("answer").value = source.solution;
         trigger("answer-form", "submit");
-        assert.match(get("feedback").textContent, /^Odpověď odpovídá/);
+        assert.match(get("feedback").textContent, /^✓ Shoda se vzorem\./);
         trigger("solution-button");
         assert.match(get("solution").textContent, /\n/);
         assert.equal(check(get("solution").textContent, task), true);
