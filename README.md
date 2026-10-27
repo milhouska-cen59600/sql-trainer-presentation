@@ -24,9 +24,17 @@ Vyber úroveň **Základy** (`zaklady`) nebo **Pokročilé** (`pokrocile`), typ
 Klikni na **Spustit**. **Další úloha** cyklicky prochází aktuální výběr.
 Režim **Oprav SQL** odvozuje 66 cvičení z existujících úloh typu **Napiš dotaz**,
 bez změny katalogu a jeho ID. Dostaneš chybný dotaz také předvyplněný v odpovědi;
-oprav jej podle zadání. Chyba vzniká deterministicky ze vzorového řešení
-(například `SORT BY`, chybějící `BY`, chybná podmínka spojení nebo `FORM` místo
-`FROM`). Kontrola používá stejné porovnání s původním správným řešením.
+oprav jej podle zadání. Při zobrazení vznikne jedna chyba ze vzorového řešení,
+náhodně z rodin použitelných pro konkrétní dotaz: obrácené porovnání nebo filtr,
+jiná agregace, opačné řazení, chybějící seskupovací sloupec, chybná podmínka
+spojení, neexistující sloupec či reference na CTE, nesprávná funkce nebo její
+argumenty a změna zachování duplicit u UNION. Komentáře a uvozované hodnoty
+se nemění. Pokud není vhodná žádná rodina, použije se neplatná čárka na začátku
+projekce SELECT, nikoli překlep klíčového slova.
+V rámci relace se rodina neopakuje bezprostředně po sobě, pokud existuje jiná
+použitelná; u malého výběru se chyby mohou opakovat. Generátor
+`createRepairGenerator(random)` umožňuje v testech dosadit řízený zdroj náhody.
+Kontrola používá nezměněné porovnání s původním správným řešením.
 Zobrazené SQL i předvyplněná odpověď mají jednotné víceřádkové formátování.
 Tlačítko **Náhodná úloha ve zvolené úrovni** vybírá se stejnou pravděpodobností
 ze všech úloh dané úrovně včetně odvozených oprav SQL bez ohledu na téma a typ,
@@ -53,6 +61,8 @@ Odpovědi se neukládají ani nikam neodesílají.
 - `index.html` načítá `app.js` a `styles.css` s parametrem `?v=` (prvních 8 znaků
   SHA-256 obsahu souboru), aby prohlížeč po nasazení nepoužil starou verzi z cache.
   Při změně těchto souborů hash aktualizuj; hlídá to `tests/test_catalog.py`.
+  Katalog se načítá s `cache: "no-cache"`, aby prohlížeč před použitím uložené
+  kopie ověřil její aktuálnost a nezobrazoval staré názvy sloupců po nasazení.
 - `scripts/build_tasks.py`: validátor a deterministický generátor katalogu.
 - `tests/test_catalog.py`: schéma, unikátní ID, pokrytí, generování a parita.
 - `tests/test_app.js`: kontrola odpovědí pomocí vestavěného Node test runneru.
@@ -113,6 +123,9 @@ Katalog je neprázdné JSON pole objektů. Povinné klíče:
 `columns` obsahuje anglické identifikátory a typy ve formátu
 `department (VARCHAR2(20))` nebo `amount (NUMBER(10,2))`; stejné identifikátory
 používej v zadání a SQL. `rows` obsahuje pole stejně širokých řádků.
+Anglické jsou také výstupní aliasy a názvy CTE (např. `total`, `name_list`,
+`expensive`); české názvy existujících tabulek, přirozený text a datové hodnoty
+zůstávají zachovány.
 Buňky jsou text, číslo nebo `null` (zobrazí se jako `NULL`). Data jsou pouze
 ukázka, ne databáze. Poznámky o chybějících hodnotách přidávej jen tam, kde mají
 význam. `explain-result` vyžaduje neprázdné `sql`.

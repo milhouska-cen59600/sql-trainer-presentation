@@ -43,7 +43,11 @@ async function createApp(random = Math.random) {
   const catalog = JSON.parse(fs.readFileSync(path.join(root, "web/tasks.json"), "utf8"));
   const app = vm.createContext({
     document: { getElementById: get, createElement: node },
-    fetch: async () => ({ ok: true, json: async () => catalog }),
+    fetch: async (url, options) => {
+      assert.equal(url, "./tasks.json");
+      assert.equal(options.cache, "no-cache");
+      return { ok: true, json: async () => catalog };
+    },
     Math: Object.assign(Object.create(Math), { random }),
   });
   vm.runInContext(fs.readFileSync(path.join(root, "web/app.js"), "utf8"), app);
@@ -413,20 +417,156 @@ test("SQL formatting is multi-line, stable, and preserves canonical tokens", () 
     "SELECT id,\n  name\nFROM products\nWHERE price > 100\nORDER BY name;");
 });
 
-test("faulty SQL generation is deterministic and leaves quoted text intact", () => {
+test("repair pools cover applicable semantic and syntactic families, not keyword typos", () => {
   const examples = [
-    ["SELECT id FROM products ORDER BY id;", /SORT BY/],
-    ["SELECT department, SUM(amount) FROM sales GROUP BY department;", /GROUP department/],
-    ["SELECT a.id FROM a JOIN b ON a.id = b.id;", /a\.id <> b\.id/],
-    ["SELECT 'FROM ORDER BY', \"GROUP\" FROM dual;", /FORM dual/],
+    ["SELECT id, name FROM products;", ["projection"]],
+    ["SELECT name FROM products WHERE price > 100;", ["filter", "projection"]],
+    ["SELECT name FROM products WHERE price BETWEEN 80 AND 120;", ["filter"]],
+    ["SELECT name FROM products WHERE name LIKE 'K%';", ["filter"]],
+    ["SELECT name FROM products ORDER BY price DESC;", ["ordering"]],
+    ["SELECT department, SUM(salary) FROM employees GROUP BY department;", ["aggregate", "grouping"]],
+    ["SELECT a.id FROM a JOIN b ON a.id = b.id;", ["join"]],
+    ["WITH expensive AS (SELECT name, price FROM products WHERE price > 100) SELECT name FROM expensive;",
+      ["cte-reference", "projection", "filter"]],
+    ["SELECT ROUND(123.456, 2) FROM dual;", ["function-arguments"]],
+    ["SELECT UPPER(name) FROM products;", ["function", "function-arguments"]],
+    ["SELECT id FROM a UNION ALL SELECT id FROM b;", ["set-operation"]],
   ];
-  for (const [sql, mistake] of examples) {
-    const faulty = context.faultySql(sql);
-    assert.match(faulty, mistake);
-    assert.equal(context.faultySql(sql), faulty);
-    assert.notEqual(context.normalizeSql(faulty), context.normalizeSql(sql));
+  for (const [sql, families] of examples) {
+    const candidates = context.repairCandidates(sql);
+    for (const family of families) {
+      assert.ok(candidates.some((candidate) => candidate.family === family), `${family}: ${sql}`);
+    }
+    for (const candidate of candidates) {
+      assert.equal(check(sql, { type: "fix-sql", solution: sql }), true);
+      assert.equal(check(candidate.sql, { type: "fix-sql", solution: sql }), false);
+      assert.doesNotMatch(candidate.sql, /\b(FORM|SORT BY|SELEC)\b/);
+      assert.equal(context.formatSql(candidate.sql), candidate.sql);
+    }
   }
-  assert.match(context.faultySql(examples.at(-1)[0]), /'FROM ORDER BY',\n  "GROUP"/);
+  assert.match(context.repairCandidates(examples[4][0]).find((c) => c.family === "ordering").sql,
+    /ORDER BY price ASC/);
+  assert.doesNotMatch(context.repairCandidates(examples[5][0]).find((c) => c.family === "grouping").sql,
+    /GROUP BY/);
+  const grouped = "SELECT department, role, SUM(salary) FROM employees GROUP BY department, role;";
+  assert.match(context.repairCandidates(grouped).find((c) => c.family === "grouping").sql,
+    /GROUP BY role/);
+  const having = "SELECT department, AVG(salary) FROM employees GROUP BY department HAVING AVG(salary) >= 45000;";
+  for (const candidate of context.repairCandidates(having).filter((c) => c.family === "aggregate")) {
+    assert.match(candidate.sql, /HAVING AVG\(salary\)/);
+  }
+});
+
+test("all write-task candidates are distinct, formatted, and rejected while canonical answers pass", () => {
+  const catalog = JSON.parse(fs.readFileSync(path.join(root, "web/tasks.json"), "utf8"));
+  const families = new Set();
+  for (const task of catalog.filter((task) => task.type === "write-query")) {
+    const candidates = context.repairCandidates(task.solution);
+    assert.ok(candidates.length, `Task ${task.id}`);
+    assert.equal(check(context.formatSql(task.solution), task), true);
+    for (const candidate of candidates) {
+      families.add(candidate.family);
+      assert.equal(check(candidate.sql, task), false, `${task.id}: ${candidate.family}`);
+      assert.match(candidate.sql, /\n/);
+    }
+  }
+  assert.ok(families.size >= 10);
+});
+
+test("injected randomness selects families evenly and avoids immediate repetition when possible", () => {
+  const sql = "SELECT name FROM products WHERE price > 100 ORDER BY price;";
+  const families = [...new Set(context.repairCandidates(sql).map((candidate) => candidate.family))];
+  for (const [index, family] of families.entries()) {
+    const generate = context.createRepairGenerator(() => (index + 0.5) / families.length);
+    assert.equal(generate(sql).family, family);
+  }
+  const first = context.createRepairGenerator(() => 0);
+  const second = context.createRepairGenerator(() => 0);
+  let previous;
+  for (let i = 0; i < 12; i++) {
+    const repair = first(sql);
+    assert.notEqual(repair.family, previous);
+    assert.deepEqual(repair, second(sql));
+    previous = repair.family;
+  }
+  const fallback = "SELECT 'FROM ORDER BY', \"GROUP\" FROM dual;";
+  assert.equal(first(fallback).family, "projection-syntax");
+  assert.equal(first(fallback).family, "projection-syntax");
+  assert.equal(check(first(fallback).sql, { type: "fix-sql", solution: fallback }), false);
+});
+
+test("mutations preserve comments, literals, quoted and unrelated identifiers", () => {
+  const sql = `SELECT name, 'WHERE price > 0 ''FROM''', "ORDER"
+    FROM products /* JOIN x ON x.id = products.id */
+    -- ORDER BY price
+    WHERE price > 100 AND form_code = 'GROUP BY';`;
+  for (const candidate of context.repairCandidates(sql)) {
+    const quoted = (text) => Array.from(context.sqlTokens(text))
+      .filter((token) => /^['"]|^--|^\/\*/.test(token));
+    assert.deepEqual(quoted(candidate.sql), quoted(sql));
+    assert.match(candidate.sql, /\bform_code\b/);
+    assert.match(candidate.sql, /-- ORDER BY price\n/);
+    assert.ok(["projection", "filter"].includes(candidate.family));
+  }
+  const nested = "SELECT name FROM products WHERE id IN (SELECT id FROM a) ORDER BY LOWER(name);";
+  const ordering = context.repairCandidates(nested).find((candidate) => candidate.family === "ordering");
+  assert.match(ordering.sql, /ORDER BY LOWER\(name\) DESC/);
+  assert.ok(!context.repairCandidates("SELECT name FROM products;")
+    .some((candidate) => ["join", "filter", "grouping", "ordering"].includes(candidate.family)));
+  assert.ok(context.repairCandidates("SELECT name FROM products WHERE (price > 100);")
+    .some((candidate) => candidate.family === "filter"));
+  assert.ok(!context.repairCandidates("SELECT UPPER('123') FROM dual;")
+    .some((candidate) => candidate.family === "function"));
+  for (const sql of [
+    "SELECT UPPER('123') FROM dual;",
+    "SELECT TRIM(' FROM WHERE ') FROM dual;",
+    'SELECT UPPER("name") FROM products;',
+    `SELECT INITCAP(TRIM("name")) FROM products;`,
+  ]) {
+    const quoted = (text) => Array.from(context.sqlTokens(text)).filter((token) => /^['"]/.test(token));
+    for (const candidate of context.repairCandidates(sql)) {
+      assert.deepEqual(quoted(candidate.sql), quoted(sql));
+      assert.equal(check(candidate.sql, { type: "fix-sql", solution: sql }), false);
+    }
+  }
+});
+
+test("session repeat avoidance follows displayed repairs, not hidden selection candidates", async () => {
+  const { get, trigger, current } = await createApp(() => 0);
+  get("task-type").value = "fix-sql";
+  get("topic").value = "operatory";
+  trigger("load");
+  const first = current().sql;
+  trigger("load");
+  const second = current().sql;
+  assert.notEqual(first, second);
+  assert.equal(get("answer").value, second);
+  assert.equal(get("hint-section").hidden, true);
+  assert.equal(get("solution-section").hidden, true);
+});
+
+test("all exercise headers render English names with parenthesized NUMBER and VARCHAR2 types", async () => {
+  const { get, trigger, exercises } = await createApp(() => 0);
+  const headers = new Set();
+  for (const level of ["zaklady", "pokrocile"]) {
+    get("level").value = level;
+    for (const type of ["write-query", "explain-result", "fix-sql"]) {
+      get("task-type").value = type;
+      trigger("load");
+      for (let i = 0; i < exercises.filter((task) => task.level === level && task.type === type).length; i++) {
+        for (const wrapper of get("tables").children) {
+          for (const cell of wrapper.children[0].tHead.rows[0].children) {
+            assert.match(cell.textContent, /^[a-z_]+ \([A-Z0-9]+(?:\([\d,]+\))?\)$/i);
+            assert.doesNotMatch(cell.textContent, /^(nazev|cena|jmeno|castka|mzda) /);
+            headers.add(cell.textContent);
+          }
+        }
+        trigger("next");
+      }
+    }
+  }
+  assert.ok(headers.has("name (VARCHAR2(30))"));
+  assert.ok(headers.has("price (NUMBER)"));
 });
 
 test("SQL examples and solutions use the same formatter; explanation prose is unchanged", async () => {

@@ -16,6 +16,7 @@ let tasks = [];
 let selection = [];
 let currentIndex = -1;
 const currentTask = () => selection[currentIndex];
+const nextRepair = createRepairGenerator();
 
 function setActions(enabled) {
   for (const id of ["answer", "check", "hint-button", "solution-button", "next"]) {
@@ -68,6 +69,7 @@ function renderTask(index) {
   clearTask("");
   currentIndex = index;
   const task = currentTask();
+  if (task.type === "fix-sql") task.sql = nextRepair(task.solution).sql;
   element("task-heading").textContent = `Úloha · ${topicLabels[task.topic] || task.topic}`;
   element("position").textContent = `Úloha ${index + 1} z ${selection.length}`;
   element("instruction").textContent = task.instruction;
@@ -87,7 +89,7 @@ function exerciseTasks(type) {
     ...task,
     type: "fix-sql",
     instruction: "Oprav SQL tak, aby splňovalo zadání.",
-    sql: faultySql(task.solution),
+    sql: null,
   }));
   return type === "fix-sql" ? fixes : type ? tasks.filter((task) => task.type === type) : [...tasks, ...fixes];
 }
@@ -182,29 +184,151 @@ function formatSql(sql) {
   return lines.join("\n");
 }
 
-function faultySql(solution) {
-  const tokens = sqlTokens(solution);
-  // Change only unquoted tokens, never literals or quoted identifiers.
-  const order = tokens.findIndex((token, index) =>
-    /^ORDER$/i.test(token) && /^BY$/i.test(tokens[index + 1] || ""));
-  if (order !== -1) {
-    tokens[order] = "SORT";
-  } else {
-    const group = tokens.findIndex((token, index) =>
-      /^GROUP$/i.test(token) && /^BY$/i.test(tokens[index + 1] || ""));
-    if (group !== -1) tokens.splice(group + 1, 1);
-    else {
-      const join = tokens.findIndex((token) => /^ON$/i.test(token));
-      const equality = join === -1 ? -1 : tokens.indexOf("=", join);
-      if (equality !== -1) tokens[equality] = "<>";
-      else {
-        const from = tokens.findIndex((token) => /^FROM$/i.test(token));
-        if (from !== -1) tokens[from] = "FORM";
-        else tokens[tokens.findIndex((token) => /^SELECT$/i.test(token))] = "SELEC";
+function repairCandidates(solution) {
+  const original = sqlTokens(solution);
+  const positions = original.flatMap((token, index) => /^--|^\/\*/.test(token) ? [] : [index]);
+  const tokens = positions.map((index) => original[index]);
+  const upper = tokens.map((token) => token.toUpperCase());
+  const candidates = [];
+  const identifier = (token = "") => /^[a-z_][a-z0-9_$#]*$/i.test(token);
+  const unused = (base) => {
+    while (upper.includes(base.toUpperCase())) base += "_x";
+    return base;
+  };
+  const add = (family, start, count, replacement) => {
+    const changed = [...original];
+    for (let i = start; i < start + count; i++) changed[positions[i]] = "";
+    changed[positions[start]] = replacement;
+    // Keep line-comment boundaries when feeding tokens back to the formatter.
+    const sql = formatSql(changed.map((token) => token.startsWith("--") ? `${token}\n` : token).join(" "));
+    if (normalizeSql(sql) !== normalizeSql(solution) &&
+        !candidates.some((candidate) => candidate.family === family && candidate.sql === sql)) {
+      candidates.push({ family, sql });
+    }
+  };
+  const depths = [];
+  const closes = new Map();
+  const opens = [];
+  let depth = 0;
+  for (let i = 0; i < tokens.length; i++) {
+    if (tokens[i] === ")") {
+      depth--;
+      closes.set(opens.pop(), i);
+    }
+    depths[i] = depth;
+    if (tokens[i] === "(") {
+      opens.push(i);
+      depth++;
+    }
+  }
+  const endOfClause = (start) => {
+    let end = start;
+    while (end < tokens.length && depths[end] >= depths[start] &&
+      !(depths[end] === depths[start] &&
+        /^(HAVING|ORDER|GROUP|UNION|INTERSECT|MINUS|ROWS|RANGE|;)$/.test(upper[end]))) end++;
+    return end;
+  };
+  const comparisons = { "=": "<>", "<>": "=", "!=": "=", ">": "<=", "<": ">=", ">=": "<", "<=": ">" };
+  const aggregates = { SUM: "AVG", AVG: "SUM", MIN: "MAX", MAX: "MIN", COUNT: "SUM" };
+  const functions = { UPPER: "LOWER", LOWER: "UPPER", INITCAP: "LOWER", LAG: "LEAD", LEAD: "LAG" };
+  const argumentFunctions = new Set([
+    "ROUND", "TRUNC", "SUBSTR", "ADD_MONTHS", "TO_DATE", "TO_CHAR", "TO_NUMBER",
+    "CONVERT", "UPPER", "LOWER", "INITCAP", "TRIM", "REPLACE", "TRANSLATE",
+    "REGEXP_LIKE", "REGEXP_REPLACE", "REGEXP_SUBSTR", "NVL", "NLSSORT",
+  ]);
+  const clauses = [];
+  for (let i = 0; i < tokens.length; i++) {
+    const word = upper[i], next = upper[i + 1], level = depths[i];
+    if (/^(SELECT|FROM|WHERE|HAVING|ON|WHEN|ORDER|GROUP|START|CONNECT)$/.test(word)) clauses[level] = word;
+    const clause = clauses[level];
+    if (word === "(") clauses[level + 1] = clause;
+    if (comparisons[word] && /^(WHERE|HAVING|WHEN|ON|START|CONNECT)$/.test(clause)) {
+      add(clause === "ON" ? "join" : "filter", i, 1, comparisons[word]);
+    }
+    if (/^(WHERE|HAVING|WHEN)$/.test(clause) && /^(BETWEEN|LIKE|IN|EXISTS)$/.test(word)) {
+      if (upper[i - 1] === "NOT") add("filter", i - 1, 1, "");
+      else add("filter", i, 1, `NOT ${tokens[i]}`);
+    }
+    if (word === "IS" && /^(WHERE|HAVING|WHEN|START)$/.test(clause)) {
+      if (next === "NULL") add("filter", i, 1, "IS NOT");
+      else if (next === "NOT" && upper[i + 2] === "NULL") add("filter", i + 1, 1, "");
+    }
+    if (next === "(" && aggregates[word] && clause === "SELECT") add("aggregate", i, 1, aggregates[word]);
+    if (next === "(" && functions[word] && identifier(tokens[i + 2])) {
+      add("function", i, 1, functions[word]);
+    }
+    if (next === "(" && argumentFunctions.has(word)) {
+      const end = closes.get(i + 1);
+      const comma = tokens.findIndex((token, index) =>
+        index > i + 1 && index < end && depths[index] === level + 1 && token === ",");
+      if (comma !== -1) add("function-arguments", comma, 1, "");
+      else if (end > i + 2 && !tokens.slice(i + 2, end).some((token) => /^['"]/.test(token))) {
+        add("function-arguments", i + 2, end - i - 2, "");
+      }
+    }
+    if (word === "SELECT") {
+      const start = next === "DISTINCT" ? i + 2 : i + 1;
+      const column = tokens[start + 1] === "." ? start + 2 : start;
+      if (identifier(tokens[column]) && tokens[column + 1] !== "(" &&
+          !/^(CASE|DATE|TIMESTAMP|NULL|LEVEL|DISTINCT|ALL)$/.test(upper[column])) {
+        add("projection", column, 1, unused("missing_column"));
+      } else if (tokens[start] === "*") {
+        add("projection", start, 1, unused("missing_column"));
+      }
+    }
+    if (word === "ORDER" && next === "BY") {
+      const start = i + 2;
+      let end = endOfClause(start);
+      const comma = tokens.findIndex((token, index) =>
+        index >= start && index < end && depths[index] === level && token === ",");
+      if (comma !== -1) end = comma;
+      const last = end - 1;
+      if (/^(ASC|DESC)$/.test(upper[last])) {
+        add("ordering", last, 1, upper[last] === "DESC" ? "ASC" : "DESC");
+      } else if (last >= start) add("ordering", last, 1, `${tokens[last]} DESC`);
+    }
+    if (word === "GROUP" && next === "BY") {
+      const start = i + 2;
+      if (identifier(tokens[start]) && !/^(ROLLUP|CUBE|GROUPING)$/.test(upper[start])) {
+        const end = endOfClause(start);
+        const comma = tokens.findIndex((token, index) =>
+          index >= start && index < end && depths[index] === level && token === ",");
+        if (comma !== -1) add("grouping", start, comma - start + 1, "");
+        else add("grouping", i, end - i, "");
+      }
+    }
+    if (word === "UNION") {
+      if (next === "ALL") add("set-operation", i + 1, 1, "");
+      else add("set-operation", i, 1, "UNION ALL");
+    }
+    if (word === "WITH" && identifier(tokens[i + 1]) && upper[i + 2] === "AS" && tokens[i + 3] === "(") {
+      const end = closes.get(i + 3);
+      for (let j = end + 1; j < tokens.length; j++) {
+        if (upper[j] === "FROM" && upper[j + 1] === upper[i + 1]) {
+          add("cte-reference", j + 1, 1, unused("missing_cte"));
+        }
       }
     }
   }
-  return formatSql(tokens.join(" "));
+  // A leading projection comma is always invalid, even for constant-only queries.
+  if (!candidates.length) {
+    const select = upper.indexOf("SELECT");
+    add("projection-syntax", select, 1, "SELECT ,");
+  }
+  return candidates;
+}
+
+function createRepairGenerator(random = Math.random) {
+  let previousFamily;
+  return (solution) => {
+    const candidates = repairCandidates(solution);
+    let families = [...new Set(candidates.map((candidate) => candidate.family))];
+    if (families.length > 1) families = families.filter((family) => family !== previousFamily);
+    const family = families[Math.floor(random() * families.length)];
+    const pool = candidates.filter((candidate) => candidate.family === family);
+    previousFamily = family;
+    return pool[Math.floor(random() * pool.length)];
+  };
 }
 
 function words(text) {
@@ -254,7 +378,7 @@ element("answer-form").addEventListener("submit", (event) => {
 
 async function initialize() {
   try {
-    const response = await fetch("./tasks.json");
+    const response = await fetch("./tasks.json", { cache: "no-cache" });
     if (!response.ok) throw new Error("Catalog unavailable");
     const catalog = await response.json();
     if (!Array.isArray(catalog) || !catalog.length) throw new Error("Invalid catalog");
