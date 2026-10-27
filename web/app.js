@@ -24,6 +24,12 @@ function setActions(enabled) {
   }
 }
 
+function resetFeedback() {
+  const feedback = element("feedback");
+  feedback.textContent = "";
+  feedback.classList.remove("feedback-success", "feedback-error");
+}
+
 function clearTask(message) {
   currentIndex = -1;
   setActions(false);
@@ -38,6 +44,7 @@ function clearTask(message) {
   element("prompt").textContent = message;
   element("tables").replaceChildren();
   element("answer").value = "";
+  resetFeedback();
 }
 
 function renderTables(tables) {
@@ -47,7 +54,7 @@ function renderTables(tables) {
     wrapper.className = "table-scroll";
     const table = document.createElement("table");
     const caption = table.createCaption();
-    caption.textContent = `${data.name} · ukázková data`;
+    caption.textContent = `${data.name} · sample data`;
     const header = table.createTHead().insertRow();
     for (const column of data.columns) {
       const cell = document.createElement("th");
@@ -81,6 +88,7 @@ function renderTask(index) {
   element("theory").textContent = task.theory || "";
   element("theory-section").hidden = !task.theory;
   element("answer").value = task.type === "fix-sql" ? formatSql(task.sql) : "";
+  resetFeedback();
   setActions(true);
 }
 
@@ -367,13 +375,25 @@ for (const name of ["hint", "solution"]) {
     element(`${name}-section`).hidden = false;
   });
 }
+element("answer").addEventListener("input", resetFeedback);
 element("answer-form").addEventListener("submit", (event) => {
   event.preventDefault();
   if (!currentTask()) return;
   const answer = element("answer").value;
-  element("feedback").textContent = !answer.trim() ? "Nejprve napiš odpověď." :
-    checkAnswer(answer, currentTask()) ? "Odpověď odpovídá vzoru nebo požadovaným klíčovým slovům." :
-      "Odpověď se neshoduje se vzorem. Zkus nápovědu nebo porovnej vzorové řešení; kontrola není SQL engine.";
+  const feedback = element("feedback");
+  feedback.classList.remove("feedback-success", "feedback-error");
+  if (!answer.trim()) {
+    feedback.textContent = "❌ Nejdříve napiš odpověď.";
+    feedback.classList.add("feedback-error");
+    return;
+  }
+  if (checkAnswer(answer, currentTask())) {
+    feedback.textContent = "✅ Správně! Odpověď odpovídá vzoru nebo požadovaným klíčovým slovům.";
+    feedback.classList.add("feedback-success");
+    return;
+  }
+  feedback.textContent = "❌ Nesprávně. Odpověď se neshoduje se vzorem. Zkus nápovědu nebo porovnej vzorové řešení; kontrola není SQL engine.";
+  feedback.classList.add("feedback-error");
 });
 
 async function initialize() {
