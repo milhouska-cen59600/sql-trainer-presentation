@@ -92,6 +92,8 @@ class CatalogTests(unittest.TestCase):
             "odmena", "prijmeni", "produkt", "skladem", "stav", "stav_a",
             "stav_b", "telefon", "tym", "tym_id", "typ", "unor", "vedouci_id",
             "zacatek",
+            "celkem", "kategorie", "seznam", "cesta", "poradi",
+            "predchozi_castka", "pocet_dni", "drahe", "levne", "dostupne",
         }
         for task in self.catalog:
             for key in ("sql", "solution"):
@@ -104,6 +106,81 @@ class CatalogTests(unittest.TestCase):
                         continue
                     with self.subTest(task=task["id"], field=key, token=token[0]):
                         self.assertNotIn(token[0].lower(), old_identifiers)
+
+    def test_english_aliases_and_ctes_stay_consistent_with_czech_prompts(self):
+        aliases = {
+            "total", "category", "name_list", "path", "rank_number",
+            "previous_amount", "day_count", "expensive", "inexpensive", "available",
+            "january", "february", "bonus",
+        }
+        found = set()
+        for task in self.catalog:
+            query = task["sql"] or task["solution"]
+            if not re.match(r"(SELECT|WITH)\b", query):
+                continue
+            query = re.sub(r"'(?:[^']|'')*'", " ", query)
+            for name in re.findall(r"\bAS\s+(\w+)|\b(\w+)\s+AS\s*\(", query, re.IGNORECASE):
+                alias = next(part for part in name if part)
+                self.assertIn(alias, aliases)
+                found.add(alias)
+                if task["type"] == "write-query":
+                    self.assertRegex(task["prompt"], rf"\b{alias}\b")
+        self.assertEqual(found, aliases)
+        tasks = {task["id"]: task for task in self.catalog}
+        self.assertIn("'dražší'", tasks[22]["solution"])
+        self.assertIn("'levnější'", tasks[22]["solution"])
+        self.assertIn("'NLS_SORT=CZECH'", tasks[107]["solution"])
+
+    def test_portable_repairs_fail_or_change_requested_results(self):
+        # SQLite checks only these portable examples, not Oracle SQL in general.
+        script = """
+const fs = require('node:fs'), vm = require('node:vm');
+const context = vm.createContext({
+  document: { getElementById: () => ({ addEventListener() {} }) },
+  fetch: () => new Promise(() => {}),
+});
+vm.runInContext(fs.readFileSync(process.argv[1], 'utf8'), context);
+const tasks = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+console.log(JSON.stringify(tasks.filter(t => t.type === 'write-query')
+  .map(t => [t.id, context.repairCandidates(t.solution)])));
+"""
+        result = subprocess.run(
+            ["node", "-e", script, str(ROOT / "web/app.js"), str(ROOT / "web/tasks.json")],
+            check=True, capture_output=True, text=True,
+        )
+        repairs = dict(json.loads(result.stdout))
+        portable = {1, 2, 4, 5, 11, 12, 14, 16, 18, 19, 21, 22, 24, 25, 26,
+                    30, 31, 32, 34, 61, 62, 68, 70, 73, 75, 78, 80, 99, 101, 105, 110}
+        checked = set()
+        for task in self.catalog:
+            if task["id"] not in portable:
+                continue
+            with sqlite3.connect(":memory:") as db:
+                db.execute("CREATE TABLE dual (dummy)")
+                db.execute("INSERT INTO dual VALUES ('X')")
+                for table in task["tables"]:
+                    columns = [builder.parse_column_header(c)[0] for c in table["columns"]]
+                    db.execute(f"CREATE TABLE {table['name']} ({', '.join(columns)})")
+                    db.executemany(
+                        f"INSERT INTO {table['name']} VALUES ({', '.join('?' for _ in columns)})",
+                        table["rows"],
+                    )
+                canonical = db.execute(task["solution"]).fetchall()
+                for candidate in repairs[task["id"]]:
+                    # SQLite permits ungrouped projections that Oracle rejects.
+                    if candidate["family"] == "grouping":
+                        continue
+                    with self.subTest(task=task["id"], family=candidate["family"]):
+                        checked.add(candidate["family"])
+                        try:
+                            faulty = db.execute(candidate["sql"]).fetchall()
+                        except sqlite3.Error:
+                            continue
+                        self.assertNotEqual(faulty, canonical, candidate["sql"])
+        self.assertTrue({
+            "projection", "filter", "ordering", "aggregate", "join",
+            "cte-reference", "function", "function-arguments", "set-operation",
+        } <= checked)
 
     def test_write_prompts_do_not_include_redundant_strategy_clauses(self):
         for task in self.catalog:
