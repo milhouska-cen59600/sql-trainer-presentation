@@ -50,6 +50,7 @@ async function createApp(random = Math.random) {
   await new Promise(setImmediate);
   return {
     get, catalog,
+    exercises: JSON.parse(vm.runInContext("JSON.stringify(exerciseTasks())", app)),
     trigger: (id, event = "click") => get(id).listeners[event]({ preventDefault() {} }),
     current: () => vm.runInContext("currentTask()", app),
   };
@@ -150,14 +151,14 @@ test("changing filters clears stale tasks and answers; empty selections never fa
   assert.equal(current().level, "pokrocile");
 });
 
-test("random selection samples every task in the selected level regardless of topic or type", async () => {
+test("random selection samples every exercise in the selected level regardless of topic or type", async () => {
   let random = 0;
-  const { get, trigger, current, catalog } = await createApp(() => random);
+  const { get, trigger, current, exercises } = await createApp(() => random);
   assert.equal(get("random").disabled, false);
   for (const level of ["zaklady", "pokrocile"]) {
     get("level").value = level;
     trigger("level", "change");
-    const expected = catalog.filter((task) => task.level === level);
+    const expected = exercises.filter((task) => task.level === level);
     for (const topic of ["", "select"]) {
       get("topic").value = topic;
       trigger("topic", "change");
@@ -185,11 +186,11 @@ test("random selection samples every task in the selected level regardless of to
 
 test("random button is enabled exactly when the selected level has candidate tasks", async () => {
   let random = 0;
-  const { get, trigger, current, catalog } = await createApp(() => random);
+  const { get, trigger, current, exercises } = await createApp(() => random);
   for (const level of ["zaklady", "pokrocile", "empty-level", "zaklady"]) {
     get("level").value = level;
     trigger("level", "change");
-    const expected = catalog.filter((task) => task.level === level);
+    const expected = exercises.filter((task) => task.level === level);
     assert.equal(get("random").disabled, expected.length === 0, level);
     if (!expected.length) continue;
     get("task-type").value = "explain-result";
@@ -203,7 +204,7 @@ test("random button is enabled exactly when the selected level has candidate tas
       assert.equal(current().level, level);
       types.add(current().type);
     }
-    assert.deepEqual([...types].sort(), ["explain-result", "write-query"]);
+    assert.deepEqual([...types].sort(), ["explain-result", "fix-sql", "write-query"]);
   }
 });
 
@@ -287,7 +288,7 @@ test("Partitioning renders the selected partition as sample-table context", asyn
   const table = get("tables").children[0].children[0];
   assert.equal(table.caption.textContent, "faktury (oddíl p2026) · ukázková data");
   assert.deepEqual(Array.from(table.tHead.rows[0].children, (cell) => cell.textContent),
-    ["id NUMBER", "castka NUMBER(10,2)"]);
+    ["id (NUMBER)", "amount (NUMBER(10,2))"]);
   assert.deepEqual(Array.from(table.tHead.rows[0].children, (cell) => cell.scope), ["col", "col"]);
   assert.deepEqual(Array.from(table.tBody.rows, (row) =>
     Array.from(row.cells, (cell) => cell.textContent)),
@@ -320,4 +321,128 @@ test("explanations match whole numbers, words and dates", () => {
   assert.equal(check("1,2,3", explanation(["1", "2", "3"])), true);
   assert.equal(check("1.5,2,3", explanation(["1", "2", "3"])), false);
   assert.equal(check("cokoli", explanation(["!!!"])), false);
+});
+
+test("theory is a native disclosure, collapsed on each task and filter change", async () => {
+  const html = fs.readFileSync(path.join(root, "web/index.html"), "utf8");
+  assert.match(html, /<details id="theory-section" hidden>\s*<summary>Teorie<\/summary>/);
+  assert.doesNotMatch(html, /<details[^>]*\bopen\b/);
+  const { get, trigger, current } = await createApp();
+  trigger("load");
+  assert.equal(get("theory-section").hidden, false);
+  assert.equal(get("theory-section").open, false);
+  assert.equal(get("theory").textContent, current().theory);
+  get("theory-section").open = true;
+  assert.equal(get("theory-section").open, true);
+  trigger("next");
+  assert.equal(get("theory-section").open, false);
+  assert.equal(get("hint-section").hidden, true);
+  assert.equal(get("solution-section").hidden, true);
+  get("theory-section").open = true;
+  trigger("topic", "change");
+  assert.equal(get("theory-section").open, false);
+});
+
+test("sample headers render English identifiers and parenthesized datatypes", async () => {
+  const { get, trigger } = await createApp();
+  get("topic").value = "agregace";
+  trigger("load");
+  const headers = get("tables").children[0].children[0].tHead.rows[0].children;
+  assert.ok(headers.some((cell) => cell.textContent === "department (VARCHAR2(20))"));
+  assert.ok(headers.every((cell) => /^[a-z_]+ \([A-Z0-9]+(?:\([\d,]+\))?\)$/.test(cell.textContent)));
+});
+
+test("Fix SQL derives every write task, preserves filters, and checks canonical answers", async () => {
+  assert.match(fs.readFileSync(path.join(root, "web/index.html"), "utf8"),
+    /<option value="fix-sql">Oprav SQL<\/option>/);
+  const { get, trigger, current, catalog } = await createApp();
+  for (const level of ["zaklady", "pokrocile"]) {
+    get("level").value = level;
+    trigger("level", "change");
+    get("task-type").value = "fix-sql";
+    trigger("task-type", "change");
+    for (const topic of get("topic").children.map((option) => option.value)) {
+      get("topic").value = topic;
+      trigger("topic", "change");
+      trigger("load");
+      const expected = catalog.filter((task) => task.type === "write-query" &&
+        task.level === level && (!topic || task.topic === topic));
+      for (const source of expected) {
+        const task = current();
+        assert.equal(task.id, source.id);
+        assert.equal(task.type, "fix-sql");
+        assert.equal(task.solution, source.solution);
+        assert.equal(task.prompt, source.prompt);
+        assert.equal(task.theory, source.theory);
+        assert.equal(get("sql-heading").textContent, "SQL k opravě");
+        assert.equal(get("sql").textContent, task.sql);
+        assert.equal(get("answer").value, task.sql);
+        assert.match(task.sql, /\n/);
+        assert.equal(check(task.sql, task), false);
+        trigger("answer-form", "submit");
+        assert.match(get("feedback").textContent, /^Odpověď se neshoduje/);
+        get("answer").value = source.solution;
+        trigger("answer-form", "submit");
+        assert.match(get("feedback").textContent, /^Odpověď odpovídá/);
+        trigger("solution-button");
+        assert.match(get("solution").textContent, /\n/);
+        assert.equal(check(get("solution").textContent, task), true);
+        trigger("next");
+      }
+      if (expected.length) assert.equal(current().id, expected[0].id);
+      else assert.equal(current(), undefined);
+    }
+  }
+});
+
+test("SQL formatting is multi-line, stable, and preserves canonical tokens", () => {
+  const catalog = JSON.parse(fs.readFileSync(path.join(root, "web/tasks.json"), "utf8"));
+  const examples = catalog.map((task) => task.sql || task.solution)
+    .concat([
+      `SELECT 'FROM, ORDER BY ''SELECT''', "GROUP BY" FROM dual;`,
+      "WITH x AS (SELECT id FROM a WHERE id IN (SELECT id FROM b)) SELECT * FROM x;",
+      "SELECT a.id FROM a LEFT OUTER JOIN b ON a.id = b.id ORDER BY a.id;",
+    ]);
+  for (const sql of examples) {
+    const formatted = context.formatSql(sql);
+    assert.match(formatted, /\n/);
+    assert.equal(context.normalizeSql(formatted), context.normalizeSql(sql));
+    assert.equal(context.formatSql(formatted), formatted);
+  }
+  assert.equal(context.formatSql("SELECT id, name FROM products WHERE price > 100 ORDER BY name;"),
+    "SELECT id,\n  name\nFROM products\nWHERE price > 100\nORDER BY name;");
+});
+
+test("faulty SQL generation is deterministic and leaves quoted text intact", () => {
+  const examples = [
+    ["SELECT id FROM products ORDER BY id;", /SORT BY/],
+    ["SELECT department, SUM(amount) FROM sales GROUP BY department;", /GROUP department/],
+    ["SELECT a.id FROM a JOIN b ON a.id = b.id;", /a\.id <> b\.id/],
+    ["SELECT 'FROM ORDER BY', \"GROUP\" FROM dual;", /FORM dual/],
+  ];
+  for (const [sql, mistake] of examples) {
+    const faulty = context.faultySql(sql);
+    assert.match(faulty, mistake);
+    assert.equal(context.faultySql(sql), faulty);
+    assert.notEqual(context.normalizeSql(faulty), context.normalizeSql(sql));
+  }
+  assert.match(context.faultySql(examples.at(-1)[0]), /'FROM ORDER BY',\n  "GROUP"/);
+});
+
+test("SQL examples and solutions use the same formatter; explanation prose is unchanged", async () => {
+  const { get, trigger, current } = await createApp();
+  for (const type of ["write-query", "explain-result"]) {
+    get("task-type").value = type;
+    trigger("task-type", "change");
+    trigger("load");
+    const task = current();
+    assert.equal(get("answer").value, "");
+    if (task.sql) assert.equal(get("sql").textContent, context.formatSql(task.sql));
+    trigger("solution-button");
+    assert.equal(get("solution").textContent,
+      type === "explain-result" ? task.solution : context.formatSql(task.solution));
+    assert.equal(get("hint-section").hidden, true);
+    trigger("hint-button");
+    assert.equal(get("hint").textContent, task.hint);
+  }
 });

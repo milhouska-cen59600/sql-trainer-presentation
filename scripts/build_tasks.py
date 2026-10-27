@@ -21,6 +21,21 @@ REQUIRED_KEYS = {
     "id", "level", "topic", "type", "instruction", "prompt", "sql",
     "theory", "tables", "solution", "hint", "keywords",
 }
+COLUMN_HEADER = re.compile(
+    r"([A-Za-z][A-Za-z0-9_]*) "
+    r"\((NUMBER(?:\([1-9][0-9]*(?:,[0-9]+)?\))?"
+    r"|(?:VARCHAR2|NVARCHAR2|CHAR|NCHAR)\([1-9][0-9]*\)"
+    r"|DATE|TIMESTAMP(?:\([0-9]+\))?"
+    r"|BINARY_FLOAT|BINARY_DOUBLE|CLOB|NCLOB|BLOB)\)"
+)
+
+
+def parse_column_header(header):
+    match = COLUMN_HEADER.fullmatch(header) if isinstance(header, str) else None
+    if not match:
+        raise ValueError(f"Invalid typed column header: {header!r}")
+    return match.groups()
+
 
 def validate_outline(outline):
     if not isinstance(outline, dict) or outline.get("version") != 1:
@@ -104,6 +119,9 @@ def validate_catalog(catalog, topics=TOPICS, outline=None):
                 not isinstance(column, str) or not column.strip() for column in table["columns"]
             ):
                 raise ValueError(f"Task {id_}: invalid columns")
+            names = [parse_column_header(column)[0].lower() for column in table["columns"]]
+            if len(names) != len(set(names)):
+                raise ValueError(f"Task {id_}: duplicate column names")
             if not isinstance(table["rows"], list):
                 raise ValueError(f"Task {id_}: rows must be a list")
             for row in table["rows"]:

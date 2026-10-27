@@ -2,8 +2,8 @@
 
 Jednoduchý český trenažér Oracle SQL bez frameworku, databáze a externích závislostí.
 Obsahuje 112 úloh odvozených z PDF v `materials/`: 64 základních a 48 pokročilých.
-Každá úloha obsahuje krátkou teorii, nápovědu a vzorové řešení; tam, kde jsou
-potřeba, také ukázková data.
+Zadání obsahuje stručný úkol a potřebná ukázková data. Teorie je ve výchozím
+stavu sbalená; nápovědu a vzorové řešení lze zobrazit na vyžádání.
 
 ## Spuštění lokálně
 
@@ -20,10 +20,17 @@ načtení JSON. Na GitHub Pages funguje relativní cesta `./tasks.json` i pod n�
 repozitáře. JavaScript potřebuje moderní prohlížeč.
 
 Vyber úroveň **Základy** (`zaklady`) nebo **Pokročilé** (`pokrocile`), typ
-**Napiš dotaz**, **Vysvětli výsledek** a volitelně téma.
+**Napiš dotaz**, **Vysvětli výsledek**, **Oprav SQL** a volitelně téma.
 Klikni na **Spustit**. **Další úloha** cyklicky prochází aktuální výběr.
+Režim **Oprav SQL** odvozuje 66 cvičení z existujících úloh typu **Napiš dotaz**,
+bez změny katalogu a jeho ID. Dostaneš chybný dotaz také předvyplněný v odpovědi;
+oprav jej podle zadání. Chyba vzniká deterministicky ze vzorového řešení
+(například `SORT BY`, chybějící `BY`, chybná podmínka spojení nebo `FORM` místo
+`FROM`). Kontrola používá stejné porovnání s původním správným řešením.
+Zobrazené SQL i předvyplněná odpověď mají jednotné víceřádkové formátování.
 Tlačítko **Náhodná úloha ve zvolené úrovni** vybírá se stejnou pravděpodobností
-ze všech úloh dané úrovně bez ohledu na téma a typ, i bez vybraného tématu.
+ze všech úloh dané úrovně včetně odvozených oprav SQL bez ohledu na téma a typ,
+i bez vybraného tématu.
 Tlačítko je aktivní, kdykoli zvolená úroveň obsahuje alespoň jednu úlohu.
 Opětovným kliknutím losuješ znovu; **Další úloha** pak prochází celou zvolenou úroveň.
 Témata i úlohy odpovídají pouze zvolené úrovni a jejímu zdrojovému PDF.
@@ -103,7 +110,9 @@ Katalog je neprázdné JSON pole objektů. Povinné klíče:
 | `hint` | Nápověda |
 | `keywords` | Pole klíčových slov, čísel či ISO dat; neprázdné u vysvětlení, jinak `[]` |
 
-`columns` obsahuje popisky sloupců včetně typů, `rows` pole stejně širokých řádků.
+`columns` obsahuje anglické identifikátory a typy ve formátu
+`department (VARCHAR2(20))` nebo `amount (NUMBER(10,2))`; stejné identifikátory
+používej v zadání a SQL. `rows` obsahuje pole stejně širokých řádků.
 Buňky jsou text, číslo nebo `null` (zobrazí se jako `NULL`). Data jsou pouze
 ukázka, ne databáze. Poznámky o chybějících hodnotách přidávej jen tam, kde mají
 význam. `explain-result` vyžaduje neprázdné `sql`.
