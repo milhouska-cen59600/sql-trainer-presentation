@@ -120,7 +120,7 @@ function startSelection() {
     task.level === element("level").value &&
     (!element("topic").value || task.topic === element("topic").value)
   );
-  if (selection.length) renderTask(0);
+  if (selection.length) renderTask(Math.floor(Math.random() * selection.length));
   else clearTask("Pro tento výběr zatím není úloha. Změň téma nebo typ a klikni na Spustit.");
 }
 

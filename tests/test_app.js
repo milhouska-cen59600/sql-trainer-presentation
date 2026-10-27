@@ -89,7 +89,7 @@ test("topic choices contain only topics from the selected level", async () => {
 });
 
 test("start and next stay within each level, type and topic, without internal ID labels", async () => {
-  const { get, trigger, current, catalog } = await createApp();
+  const { get, trigger, current, catalog } = await createApp(() => 0);
   for (const level of ["zaklady", "pokrocile"]) {
     get("level").value = level;
     trigger("level", "change");
@@ -128,6 +128,36 @@ test("start and next stay within each level, type and topic, without internal ID
           trigger("next");
         }
         assert.equal(current().id, expected[0].id);
+      }
+    }
+  }
+});
+
+test("start samples the filtered selection on every click, including first and last indices", async () => {
+  let random = 0;
+  const { get, trigger, current, exercises } = await createApp(() => random);
+  for (const level of ["zaklady", "pokrocile"]) {
+    get("level").value = level;
+    trigger("level", "change");
+    for (const type of ["write-query", "explain-result", "fix-sql"]) {
+      get("task-type").value = type;
+      trigger("task-type", "change");
+      for (const topic of get("topic").children.map((option) => option.value)) {
+        get("topic").value = topic;
+        trigger("topic", "change");
+        const expected = exercises.filter((task) => task.level === level && task.type === type &&
+          (!topic || task.topic === topic));
+        if (!expected.length) continue;
+        for (const value of [0, 0.5, 1 - Number.EPSILON]) {
+          random = value;
+          trigger("load");
+          const index = Math.floor(value * expected.length);
+          assert.equal(current().id, expected[index].id);
+          assert.equal(current().type, type);
+          assert.equal(get("position").textContent, `Úloha ${index + 1} z ${expected.length}`);
+          trigger("next");
+          assert.equal(current().id, expected[(index + 1) % expected.length].id);
+        }
       }
     }
   }
@@ -306,11 +336,13 @@ test("random selection clears stale state for an empty level and exact-topic bro
   trigger("load");
   const expected = catalog.filter((task) => task.level === "zaklady" &&
     task.type === "write-query" && task.topic === "select");
-  for (const task of expected) {
+  const start = Math.floor(0.5 * expected.length);
+  for (let offset = 0; offset < expected.length; offset++) {
+    const task = expected[(start + offset) % expected.length];
     assert.equal(current().id, task.id);
     trigger("next");
   }
-  assert.equal(current().id, expected[0].id);
+  assert.equal(current().id, expected[start].id);
 });
 
 test("every sample solution passes its own check", () => {
@@ -346,7 +378,7 @@ test("date and DECODE explanations agree with the requested output", () => {
 });
 
 test("Partitioning renders the selected partition as sample-table context", async () => {
-  const { get, trigger } = await createApp();
+  const { get, trigger } = await createApp(() => 0);
   get("level").value = "pokrocile";
   trigger("level", "change");
   get("topic").value = "partitioning";
@@ -412,7 +444,7 @@ test("theory is a native disclosure, collapsed on each task and filter change", 
 });
 
 test("sample headers render English identifiers and parenthesized datatypes", async () => {
-  const { get, trigger } = await createApp();
+  const { get, trigger } = await createApp(() => 0);
   get("topic").value = "agregace";
   trigger("load");
   const headers = get("tables").children[0].children[0].tHead.rows[0].children;
@@ -423,7 +455,7 @@ test("sample headers render English identifiers and parenthesized datatypes", as
 test("Fix SQL derives every write task, preserves filters, and checks canonical answers", async () => {
   assert.match(fs.readFileSync(path.join(root, "web/index.html"), "utf8"),
     /<option value="fix-sql">Oprav SQL<\/option>/);
-  const { get, trigger, current, catalog } = await createApp();
+  const { get, trigger, current, catalog } = await createApp(() => 0);
   for (const level of ["zaklady", "pokrocile"]) {
     get("level").value = level;
     trigger("level", "change");
