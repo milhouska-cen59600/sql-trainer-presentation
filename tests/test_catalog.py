@@ -234,7 +234,7 @@ console.log(JSON.stringify(tasks.filter(t => t.type === 'write-query')
 
     def test_relational_examples_match_task_schemas(self):
         examples = {
-            43: [("faktury (oddíl p2026)", ["id (NUMBER)", "amount (NUMBER(10,2))"])],
+            43: [("invoices (oddíl p2026)", ["id (NUMBER)", "amount (NUMBER(10,2))"])],
             45: [("ALL_TABLES", ["OWNER (VARCHAR2(30))", "TABLE_NAME (VARCHAR2(30))"])],
             46: [("ALL_TAB_COLUMNS", [
                 "OWNER (VARCHAR2(30))", "TABLE_NAME (VARCHAR2(30))",
@@ -247,7 +247,7 @@ console.log(JSON.stringify(tasks.filter(t => t.type === 'write-query')
                 ("dwh_owner.parties (oddíl partition_11)", [
                     "pt_key (NUMBER)", "party_name (VARCHAR2(40))",
                 ]),
-                ("zamestnanci", ["id (NUMBER)", "department (VARCHAR2(20))", "salary (NUMBER)"]),
+                ("employees", ["id (NUMBER)", "department (VARCHAR2(20))", "salary (NUMBER)"]),
             ],
             87: [("ALL_TAB_COLUMNS", [
                 "OWNER (VARCHAR2(30))", "TABLE_NAME (VARCHAR2(30))", "COLUMN_NAME (VARCHAR2(30))",
@@ -256,7 +256,7 @@ console.log(JSON.stringify(tasks.filter(t => t.type === 'write-query')
                 "OWNER (VARCHAR2(30))", "TABLE_NAME (VARCHAR2(30))",
                 "COLUMN_NAME (VARCHAR2(30))", "DATA_TYPE (VARCHAR2(30))",
             ])],
-            94: [("zamestnanci", ["department (VARCHAR2(20))", "role (VARCHAR2(20))"])],
+            94: [("employees", ["department (VARCHAR2(20))", "role (VARCHAR2(20))"])],
             96: [("data", ["value (VARCHAR2(20))"])],
         }
         tasks = {task["id"]: task for task in self.catalog}
@@ -380,7 +380,7 @@ console.log(JSON.stringify(tasks.filter(t => t.type === 'write-query')
             30: [("Eva", "Data"), ("Petr", "Data"), ("Iva", "Prodej")],
             34: [("Káva",), ("Kakao",)],
             35: [(200,)],
-            45: [("OBJEDNAVKY",), ("PRODUKTY",), ("ZAMESTNANCI",)],
+            45: [("EMPLOYEES",), ("ORDERS",), ("PRODUCTS",)],
             58: [(1, "Data", 45000, 3), (2, "Data", 50000, 1),
                  (3, "Prodej", 40000, 1), (4, "Data", 50000, 2)],
             63: [(1,), (3,)],
